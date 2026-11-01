@@ -1,0 +1,10 @@
+{
+  "name": "Givers World Mission Student Management System",
+  "description": "A comprehensive web portal and management system for Givers World Mission Diplomats Academy & College in Kambia 1, Northern Province, Sierra Leone, supporting Nursery, Primary, JSS, SSS, and College Certificate and Diploma programs, automated SMS broadcasts, continuous assessments, and fee management.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

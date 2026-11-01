@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access privileges for school management",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full name of the user" },
+        "role": { 
+          "type": "string", 
+          "description": "System role determining permissions and privileges",
+          "enum": ["admin", "teacher", "bursar", "transport", "student_parent"]
+        },
+        "photoURL": { "type": "string", "description": "Profile picture URL" },
+        "createdAt": { "type": "string", "description": "Creation ISO timestamp" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "RolePrivilege": {
+      "title": "RolePrivilege",
+      "description": "Privileges configuration assigned to user or role",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "description": "Target role name" },
+        "canManageStudents": { "type": "string", "description": "Can create/edit/delete students" },
+        "canManageGrades": { "type": "string", "description": "Can record and edit academic grades" },
+        "canManageFinances": { "type": "string", "description": "Can record payments and view ledgers" },
+        "canManageStaff": { "type": "string", "description": "Can manage staff profiles and salaries" },
+        "canManageTransport": { "type": "string", "description": "Can update bus routes and fleet" },
+        "canBackupData": { "type": "string", "description": "Can export and backup system data" }
+      },
+      "required": ["role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user account information, profile details, and role assignments"
+    },
+    "/admins/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of designated system administrators"
+    },
+    "/students/{studentId}": {
+      "description": "Permanent student records, bio, enrollment, and access credentials"
+    },
+    "/academic_records/{recordId}": {
+      "description": "Student academic performance, term grades, remarks, and GPA"
+    },
+    "/fee_ledgers/{ledgerId}": {
+      "description": "Tuition fees, payments, balances, and receipt logs"
+    },
+    "/exam_preps/{prepId}": {
+      "description": "National exam preparation records (NPSE, BECE, WASSCE)"
+    },
+    "/teachers/{teacherId}": {
+      "description": "Teacher and staff directory, subject assignments, access codes"
+    },
+    "/assignments/{assignmentId}": {
+      "description": "Coursework and assignments created by faculty"
+    },
+    "/submissions/{submissionId}": {
+      "description": "Student assignment submissions"
+    },
+    "/announcements/{announcementId}": {
+      "description": "School notices, principal broadcasts, and alerts"
+    },
+    "/buses/{busId}": {
+      "description": "School transport bus fleet and route statuses"
+    },
+    "/bus_assignments/{assignmentId}": {
+      "description": "Student transport route assignments"
+    },
+    "/daily_attendance/{recordId}": {
+      "description": "Classroom daily attendance register records"
+    },
+    "/incidents/{incidentId}": {
+      "description": "Student disciplinary cases and counsel tracking"
+    },
+    "/system_settings/{settingId}": {
+      "description": "Institutional configuration, academic year, and term schedules"
+    },
+    "/reference_audit_logs/{logId}": {
+      "description": "Permanent institutional data entry reference records and audit history"
+    }
+  }
+}

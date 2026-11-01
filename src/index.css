@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* Dark Mode Global Styles */
+.dark {
+  --background-dark: #090d16;
+  --card-dark: #121824;
+  --card-dark-hover: #172030;
+  --border-dark: #1e293b;
+  --text-dark-primary: #f8fafc;
+  --text-dark-secondary: #94a3b8;
+  --text-dark-tertiary: #64748b;
+  --input-dark: #1e293b;
+  --input-border-dark: #334155;
+  color-scheme: dark;
+}
+
+.dark body,
+.dark #main-app-container {
+  background-color: var(--background-dark) !important;
+  color: var(--text-dark-primary) !important;
+}
+
+/* Background overrides */
+.dark .bg-slate-50 {
+  background-color: var(--background-dark) !important;
+}
+
+.dark .bg-white {
+  background-color: var(--card-dark) !important;
+  color: var(--text-dark-primary) !important;
+}
+
+.dark .bg-slate-50\/50,
+.dark .bg-slate-100\/50,
+.dark .bg-slate-50,
+.dark .bg-slate-100,
+.dark .bg-slate-200 {
+  background-color: var(--card-dark-hover) !important;
+}
+
+/* Border overrides */
+.dark .border-slate-100,
+.dark .border-slate-150,
+.dark .border-slate-200,
+.dark .border-slate-200\/50,
+.dark .divide-slate-100,
+.dark .divide-slate-200 {
+  border-color: var(--border-dark) !important;
+}
+
+/* Text color overrides */
+.dark .text-slate-900 {
+  color: var(--text-dark-primary) !important;
+}
+
+.dark .text-slate-800 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-700 {
+  color: var(--text-dark-secondary) !important;
+}
+
+.dark .text-slate-600 {
+  color: var(--text-dark-secondary) !important;
+}
+
+.dark .text-slate-500 {
+  color: var(--text-dark-tertiary) !important;
+}
+
+.dark .text-slate-400 {
+  color: var(--text-dark-tertiary) !important;
+}
+
+/* Forms & inputs */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--input-dark) !important;
+  color: var(--text-dark-primary) !important;
+  border-color: var(--input-border-dark) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-dark-tertiary) !important;
+}
+
+/* Hover background modifications */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-200:hover,
+.dark .hover\:bg-slate-50\/50:hover {
+  background-color: var(--card-dark-hover) !important;
+}
+
+/* Tables style mapping */
+.dark thead {
+  background-color: var(--card-dark-hover) !important;
+}
+
+.dark th {
+  color: var(--text-dark-secondary) !important;
+  border-bottom-color: var(--border-dark) !important;
+}
+
+.dark tr:hover {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+}
+
+/* Modals overlays and cards */
+.dark .fixed.bg-slate-900\/50 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Recharts Customization for Dark Mode */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: var(--border-dark) !important;
+}
+
+.dark .recharts-text {
+  fill: var(--text-dark-secondary) !important;
+}
+
+.dark .recharts-legend-item-text {
+  color: var(--text-dark-secondary) !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: var(--card-dark) !important;
+  border-color: var(--border-dark) !important;
+  color: var(--text-dark-primary) !important;
+}
+
+/* ==========================================
+   PRINT STYLES FOR ID CARDS & REPORT CARDS
+   ========================================== */
+@media print {
+  /* Set document margin and color profile */
+  @page {
+    size: auto;
+    margin: 12mm 10mm;
+  }
+  
+  /* Reset document and body styles for clean paper printout */
+  html, body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 12pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Hide all core application chrome, sidebars, headers, background overlays, and actions */
+  #desktop-sidebar,
+  #mobile-header,
+  #mobile-drawer,
+  #workspace-viewport,
+  #main-app-container,
+  .print\:hidden,
+  button,
+  select,
+  input,
+  header,
+  aside,
+  nav,
+  form,
+  .backdrop-blur-xs,
+  .backdrop-blur-sm,
+  .bg-slate-950\/60,
+  .bg-slate-900\/60 {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Enable print containers to be visible and take up full page width */
+  #id-card-generator-modal,
+  #printable-report-card,
+  #printable-report-container,
+  #printable-directory-modal {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 9999 !important;
+  }
+
+  /* Make sure internal elements inside printable containers are visible */
+  #id-card-generator-modal *,
+  #printable-report-card *,
+  #printable-report-container *,
+  #printable-directory-modal * {
+    visibility: visible !important;
+  }
+
+  /* Specific rules for ID Cards Grid Layout on printing */
+  .print-card-grid {
+    display: grid !important;
+    grid-template-cols: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Ensure background colors and gradients render properly on print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Avoid breaking single ID cards across page boundaries */
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* Subtle Shimmer & Progress Animations for Data Operations */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-sweep 1.8s infinite;
+  content: '';
+  pointer-events: none;
+}
+
+.dark .animate-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+@keyframes progress-stripe {
+  from {
+    background-position: 1rem 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.animate-striped-progress {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-stripe 1s linear infinite;
+}
+

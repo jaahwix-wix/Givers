@@ -28,10 +28,6 @@ import {
 } from 'lucide-react';
 import { Student, StudentAcademicRecord, NationalExamPrep, StudentFeeLedger, FeeTransaction } from './types';
 import { 
-  INITIAL_STUDENTS, 
-  INITIAL_ACADEMIC_RECORDS, 
-  INITIAL_NATIONAL_EXAMS, 
-  INITIAL_FEE_LEDGERS,
   DEMO_SAMPLE_STUDENTS,
   DEMO_SAMPLE_ACADEMIC_RECORDS,
   DEMO_SAMPLE_NATIONAL_EXAMS,
@@ -146,12 +142,12 @@ export default function App() {
 
   // 1. Real-time Cloud Firestore & LocalStorage Synchronization
   useEffect(() => {
-    // Realtime Sync for Students
+    // Realtime Sync for Students (Empty fallback for live production)
     const unsubStudents = syncFirestoreCollection<Student>(
       'students',
       'sma_students',
       (items) => setStudents(items),
-      INITIAL_STUDENTS
+      []
     );
 
     // Realtime Sync for Academic Records
@@ -159,7 +155,7 @@ export default function App() {
       'academic_records',
       'sma_academic_records',
       (items) => setRecords(items),
-      INITIAL_ACADEMIC_RECORDS
+      []
     );
 
     // Realtime Sync for National Exam Preps
@@ -167,7 +163,7 @@ export default function App() {
       'exam_preps',
       'sma_exam_preps',
       (items) => setExamPreps(items),
-      INITIAL_NATIONAL_EXAMS
+      []
     );
 
     // Realtime Sync for Fee Ledgers
@@ -175,7 +171,7 @@ export default function App() {
       'fee_ledgers',
       'sma_fee_ledgers',
       (items) => setFees(items),
-      INITIAL_FEE_LEDGERS
+      []
     );
 
     const handleLocalWipe = () => {
@@ -187,19 +183,22 @@ export default function App() {
 
     window.addEventListener('sma_database_wiped', handleLocalWipe);
 
-    // Initial clean-slate enforcement for user request: "Delete all records"
-    const purgeFlag = 'sma_user_clean_slate_executed_v1';
-    if (typeof window !== 'undefined' && !localStorage.getItem(purgeFlag)) {
-      localStorage.setItem(purgeFlag, 'true');
-      wipeAllSystemData();
-      clearAllFirestoreSchoolData().catch(e => console.warn('Clean slate sync notice:', e));
-      recordDataEntry({
-        type: 'Database System Wipe',
-        category: 'System',
-        title: 'Initial Live System Clean Slate Activated',
-        summary: 'All test and legacy records cleared for production. System is on a fresh, 100% clean slate ready for student registrations and all data entries are permanently referenced.',
-        status: 'Historical Reference'
-      });
+    // Enforce Live Production Mode - delete all mock/sample data and stop auto generation
+    const liveProductionPurgeFlag = 'sma_live_production_clean_slate_active_v1';
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sma_live_production_active', 'true');
+      if (!localStorage.getItem(liveProductionPurgeFlag)) {
+        localStorage.setItem(liveProductionPurgeFlag, 'true');
+        wipeAllSystemData();
+        clearAllFirestoreSchoolData().catch(e => console.warn('Clean slate sync notice:', e));
+        recordDataEntry({
+          type: 'Database System Wipe',
+          category: 'System',
+          title: 'Live Production Clean Slate Activated',
+          summary: 'All mock and sample data have been wiped. System is in live production mode ready for real student admissions, grades, fees, and staff. Automatic mock data generation is completely disabled.',
+          status: 'Historical Reference'
+        });
+      }
     }
 
     return () => {

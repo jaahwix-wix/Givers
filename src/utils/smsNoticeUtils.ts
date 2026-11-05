@@ -65,14 +65,6 @@ export function broadcastNoticeSMS(notice: ClassNotice, registeredStudents: Stud
     s.status === 'Active' && (isAllClasses || s.currentClass === notice.targetClass)
   );
 
-  // If no students are currently registered in this class, draw from sample recipients for realistic verification
-  const sampleFallback = INITIAL_SAMPLE_RECIPIENTS_BY_CLASS[notice.targetClass] || [
-    { studentName: 'Fatmata Kamara', parentName: 'Mr. Bai Kamara', phone: '+232 76 554321' },
-    { studentName: 'Mohamed Turay', parentName: 'Mrs. Aminata Turay', phone: '+232 77 889900' },
-    { studentName: 'Zainab Conteh', parentName: 'Pa Alie Conteh', phone: '+232 78 112233' },
-    { studentName: 'Alie Bangura', parentName: 'Madam Isata Bangura', phone: '+232 88 445566' }
-  ];
-
   const recipientsList: Array<{ studentId: string; studentName: string; currentClass: StudentClass; parentName: string; phone: string }> = [];
 
   if (targetStudents.length > 0) {
@@ -83,17 +75,6 @@ export function broadcastNoticeSMS(notice: ClassNotice, registeredStudents: Stud
         currentClass: s.currentClass,
         parentName: s.parentName || `Guardian of ${s.name}`,
         phone: s.parentPhone || '+232 76 000000'
-      });
-    });
-  } else {
-    // Generate class student & parent records
-    sampleFallback.forEach((item, index) => {
-      recipientsList.push({
-        studentId: `std-class-${notice.targetClass.replace(/\s+/g, '-').toLowerCase()}-${index + 1}`,
-        studentName: item.studentName,
-        currentClass: (isAllClasses ? 'SSS 3' : notice.targetClass) as StudentClass,
-        parentName: item.parentName,
-        phone: item.phone
       });
     });
   }

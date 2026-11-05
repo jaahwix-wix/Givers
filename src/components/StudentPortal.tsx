@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Student, StudentAcademicRecord, StudentFeeLedger, StudentClass } from '../types';
-import { SCHOOL_INFO, INITIAL_STUDENTS } from '../initialData';
+import { SCHOOL_INFO } from '../initialData';
 import { getSubjectsForClass, calculateGrade, getGradingScale } from '../constants';
 import PrincipalsNoticeBanner from './PrincipalsNoticeBanner';
 
@@ -337,65 +337,75 @@ Submit your solutions via the Givers World Mission High School Student Portal.
               Access Portal <ArrowRight className="w-4 h-4" />
             </button>
 
-            {/* Instant 1-Click Bypass Button */}
-            <button
-              type="button"
-              onClick={() => {
-                const targetStudent = students[0] || INITIAL_STUDENTS[0];
-                if (targetStudent) {
-                  localStorage.setItem('sma_active_portal_student', targetStudent.admissionNumber);
-                  setLoggedInStudent(targetStudent);
-                  setErrorMessage(null);
-                  setActiveTab('overview');
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-xs transition-all cursor-pointer shadow-2xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>⚡ Instant 1-Click Access as Enrolled Student</span>
-            </button>
+            {/* Instant 1-Click Access Button (Only visible when students exist) */}
+            {students.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const targetStudent = students[0];
+                  if (targetStudent) {
+                    localStorage.setItem('sma_active_portal_student', targetStudent.admissionNumber);
+                    setLoggedInStudent(targetStudent);
+                    setErrorMessage(null);
+                    setActiveTab('overview');
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-xs transition-all cursor-pointer shadow-2xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>⚡ Instant 1-Click Access as Enrolled Student ({students[0].name})</span>
+              </button>
+            )}
           </div>
         </form>
 
-        {/* Pre-Generated Student Keys Quick Selector */}
-        <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-600" />
-              <span>Enrolled Students (Click to Enter):</span>
-            </span>
-            <span className="text-[10px] text-emerald-600 font-bold">Keys Pre-Generated</span>
-          </div>
+        {/* Enrolled Student Keys Quick Selector (Only visible when students exist) */}
+        {students.length > 0 ? (
+          <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600" />
+                <span>Enrolled Students (Click to Enter):</span>
+              </span>
+              <span className="text-[10px] text-emerald-600 font-bold">Live Registry</span>
+            </div>
 
-          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-            {students.slice(0, 5).map(s => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => {
-                  setAdmissionInput(s.admissionNumber);
-                  handleLogin(s.admissionNumber);
-                }}
-                className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/40 text-left transition-colors flex items-center justify-between cursor-pointer group"
-              >
-                <div>
-                  <div className="font-bold text-xs text-slate-800 group-hover:text-emerald-700">
-                    {s.name} <span className="text-[10px] text-slate-400 font-normal">({s.currentClass})</span>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {students.slice(0, 5).map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    setAdmissionInput(s.admissionNumber);
+                    handleLogin(s.admissionNumber);
+                  }}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/40 text-left transition-colors flex items-center justify-between cursor-pointer group"
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-800 group-hover:text-emerald-700">
+                      {s.name} <span className="text-[10px] text-slate-400 font-normal">({s.currentClass})</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
+                      <span>ID: <strong className="text-slate-700">{s.admissionNumber}</strong></span>
+                      {s.parentAccessCode && (
+                        <span>Parent Code: <strong className="text-emerald-700">{s.parentAccessCode}</strong></span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 flex items-center gap-2 mt-0.5">
-                    <span>ID: <strong className="text-slate-700">{s.admissionNumber}</strong></span>
-                    {s.parentAccessCode && (
-                      <span>Parent Code: <strong className="text-emerald-700">{s.parentAccessCode}</strong></span>
-                    )}
-                  </div>
-                </div>
-                <span className="text-[11px] font-extrabold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
-                  Enter →
-                </span>
-              </button>
-            ))}
+                  <span className="text-[11px] font-extrabold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
+                    Enter →
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center py-4">
+            <p className="text-xs text-slate-400 font-medium">
+              Live Database Mode: No registered students yet. Once students are admitted through the Student Records section, their credentials will activate automatically.
+            </p>
+          </div>
+        )}
 
         {/* Institutional Privacy & Security Notice */}
         <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">

@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Student, StudentFeeLedger, SchoolAnnouncement, NotificationAlert, Assignment, Submission } from '../types';
-import { DEFAULT_SCHOOL_ANNOUNCEMENTS, DEFAULT_SAMPLE_ASSIGNMENTS, DEFAULT_SAMPLE_SUBMISSIONS } from '../initialData';
 import { LIVE_MODE_INDICATOR_KEY } from '../utils/dataStore';
 
 interface UseNotificationsProps {

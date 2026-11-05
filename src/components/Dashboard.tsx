@@ -406,13 +406,16 @@ CEO/Principal, Givers World Mission`;
       const student = students.find(s => s.id === ep.studentId);
       if (!student || student.status !== 'Active') return false;
       const scores = ep.subjectsScores;
+      if (!scores || scores.length === 0) return false;
       const avgMock = scores.reduce((sum, s) => sum + s.mockScore, 0) / scores.length;
       return avgMock < 55;
     })
     .map(ep => {
       const student = students.find(s => s.id === ep.studentId)!;
       const scores = ep.subjectsScores;
-      const avgMock = Math.round(scores.reduce((sum, s) => sum + s.mockScore, 0) / scores.length);
+      const avgMock = (scores && scores.length > 0)
+        ? Math.round(scores.reduce((sum, s) => sum + s.mockScore, 0) / scores.length)
+        : 0;
       return { student, type: ep.examType, average: avgMock };
     });
 

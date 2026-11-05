@@ -32,7 +32,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { Student, Teacher, StudentClass } from '../types';
-import { SCHOOL_INFO, DEFAULT_SAMPLE_TEACHERS } from '../initialData';
+import { SCHOOL_INFO } from '../initialData';
 import { CLASSES_LIST } from '../constants';
 
 interface IdCardCenterProps {

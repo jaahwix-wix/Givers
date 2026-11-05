@@ -26,7 +26,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import schoolLogo from '../../../assets/logo.jpg';
 import { UserRole, Student, Teacher } from '../../../types';
-import { INITIAL_STUDENTS, SCHOOL_INFO } from '../../../initialData';
+import { SCHOOL_INFO } from '../../../initialData';
 import { 
   findTeacherByCode, 
   findStudentByParentCode, 
@@ -179,10 +179,10 @@ export default function PortalLoginPage({
       try {
         loadedStudents = JSON.parse(cachedStudents);
       } catch {
-        loadedStudents = students.length > 0 ? students : INITIAL_STUDENTS;
+        loadedStudents = students.length > 0 ? students : [];
       }
     } else {
-      loadedStudents = students.length > 0 ? students : INITIAL_STUDENTS;
+      loadedStudents = students.length > 0 ? students : [];
     }
     const sanitizedStudents = loadedStudents.map(ensureStudentAccessCodes);
     setAllStudents(sanitizedStudents);

@@ -43,12 +43,7 @@ import { StudentClass, Teacher, Assignment, Submission } from '../types';
 import { CLASSES_LIST } from '../constants';
 import PrincipalsNoticeBanner from './PrincipalsNoticeBanner';
 import { ensureTeacherAccessCode, generateTeacherCode } from '../utils/codeGenerator';
-import { 
-  DEFAULT_SAMPLE_TEACHERS, 
-  DEFAULT_SAMPLE_ASSIGNMENTS, 
-  DEFAULT_SAMPLE_SUBMISSIONS, 
-  SCHOOL_INFO 
-} from '../initialData';
+import { SCHOOL_INFO } from '../initialData';
 import { useAuth } from '../context/AuthContext';
 import { 
   syncFirestoreCollection, 
@@ -140,21 +135,21 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
           setSelectedTeacherId(sanitized[0].id);
         }
       },
-      DEFAULT_SAMPLE_TEACHERS
+      []
     );
 
     const unsubAssignments = syncFirestoreCollection<Assignment>(
       'assignments',
       'sma_assignments',
       (items) => setAssignments(items),
-      DEFAULT_SAMPLE_ASSIGNMENTS
+      []
     );
 
     const unsubSubmissions = syncFirestoreCollection<Submission>(
       'submissions',
       'sma_submissions',
       (items) => setSubmissions(items),
-      DEFAULT_SAMPLE_SUBMISSIONS
+      []
     );
 
     const handleWiped = () => {

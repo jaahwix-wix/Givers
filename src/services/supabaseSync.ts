@@ -87,6 +87,24 @@ export function sanitizeForSupabase<T>(obj: T): T {
   return obj;
 }
 
+export const LIVE_MODE_STORAGE_KEY = 'sma_live_production_active';
+
+/**
+ * Checks whether the application is running in Live Production Mode.
+ * Default is TRUE for live production deployments.
+ */
+export function isLiveProductionMode(): boolean {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem(LIVE_MODE_STORAGE_KEY) !== 'false';
+}
+
+export function setLiveProductionMode(isLive: boolean): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LIVE_MODE_STORAGE_KEY, isLive ? 'true' : 'false');
+    window.dispatchEvent(new CustomEvent('sma_live_mode_changed', { detail: { isLive } }));
+  }
+}
+
 /**
  * Synchronizes a collection in real time with Supabase and localStorage.
  */
@@ -101,12 +119,16 @@ export function syncSupabaseCollection<T extends { id?: string; studentId?: stri
     const cached = localStorage.getItem(localStorageKey);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         onData(parsed);
+      } else {
+        onData([]);
       }
+    } else {
+      onData([]);
     }
   } catch (err) {
-    console.warn(`[SupabaseSync] Failed reading cache for ${collectionName}:`, err);
+    onData([]);
   }
 
   let isSubscribed = true;
@@ -142,19 +164,18 @@ export function syncSupabaseCollection<T extends { id?: string; studentId?: stri
           console.warn(`[SupabaseSync] Failed updating local storage for ${collectionName}:`, e);
         }
       } else if (!error && Array.isArray(data) && data.length === 0) {
-        // Remote table is empty. Check if local cache has items to migrate to Supabase
-        try {
-          const cached = localStorage.getItem(localStorageKey);
-          if (cached) {
-            const localItems = JSON.parse(cached);
-            if (Array.isArray(localItems) && localItems.length > 0) {
-              batchSaveToSupabase(collectionName, localItems);
-              onData(localItems);
-              return;
-            }
-          }
-        } catch {}
+        // Remote table is empty.
+        // In live production mode, NEVER auto-seed mock or sample data!
+        // The database remains pristine and ready for live user input.
+        if (isLiveProductionMode()) {
+          onData([]);
+          try {
+            localStorage.setItem(localStorageKey, JSON.stringify([]));
+          } catch {}
+          return;
+        }
 
+        // Only in staging / demo sandbox if explicitly requested:
         if (fallbackInitialData.length > 0) {
           batchSaveToSupabase(collectionName, fallbackInitialData);
           onData(fallbackInitialData);

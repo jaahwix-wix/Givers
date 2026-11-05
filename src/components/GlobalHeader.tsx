@@ -22,13 +22,15 @@ import {
   Copy,
   Check,
   Globe,
-  Cloud
+  Cloud,
+  Database
 } from 'lucide-react';
 import { Student, StudentFeeLedger } from '../types';
 import { SCHOOL_INFO } from '../initialData';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationDropdown from './NotificationDropdown';
+import SupabaseConfigModal from './SupabaseConfigModal';
 
 interface GlobalHeaderProps {
   students: Student[];
@@ -45,6 +47,7 @@ export default function GlobalHeader({ students, fees, activeTab, onNavigate, on
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -307,11 +310,16 @@ export default function GlobalHeader({ students, fees, activeTab, onNavigate, on
 
       {/* Header Right Status Bar */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold" title="Data is synchronized continuously to Cloud Firestore across all devices">
-          <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+        <button
+          type="button"
+          onClick={() => setIsSupabaseModalOpen(true)}
+          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
+          title="Click to view Supabase database connection, credentials, and SQL schema setup"
+        >
+          <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Cloud Synced</span>
-        </div>
+          <span>Supabase Synced</span>
+        </button>
 
         <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -435,6 +443,14 @@ export default function GlobalHeader({ students, fees, activeTab, onNavigate, on
           </div>
         </div>
       )}
+
+      {/* Supabase Database Settings & SQL Setup Modal */}
+      <SupabaseConfigModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
+        students={students}
+        fees={fees}
+      />
     </header>
   );
 }

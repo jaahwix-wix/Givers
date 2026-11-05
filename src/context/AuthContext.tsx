@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, ROLE_PRIVILEGES_MAP, DEMO_PRESET_USERS, testFirestoreConnection } from '../firebase';
+import { testSupabaseConnection } from '../supabase';
 import { UserRole, RolePrivileges, AuthUser } from '../types';
 
 interface AuthContextType {
@@ -20,6 +21,7 @@ interface AuthContextType {
   privileges: RolePrivileges;
   isLoading: boolean;
   isFirebaseOnline: boolean;
+  isSupabaseOnline: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
   switchRole: (role: UserRole) => void;
@@ -47,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirebaseOnline, setIsFirebaseOnline] = useState(false);
+  const [isSupabaseOnline, setIsSupabaseOnline] = useState(false);
   
   // Stored registry of system accounts
   const [userList, setUserList] = useState<AuthUser[]>(() => {
@@ -70,11 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return Boolean(privileges[permission]);
   };
 
-  // Test Firebase connection on boot
+  // Test Supabase connection on boot and listen to credentials updates
   useEffect(() => {
-    testFirestoreConnection().then(online => {
-      setIsFirebaseOnline(online);
-    });
+    const checkSupabase = () => {
+      testSupabaseConnection().then(res => {
+        setIsSupabaseOnline(res.connected);
+        setIsFirebaseOnline(res.connected); // Maintain compatibility
+      });
+    };
+    checkSupabase();
+    window.addEventListener('sma_supabase_config_changed', checkSupabase);
+    return () => window.removeEventListener('sma_supabase_config_changed', checkSupabase);
   }, []);
 
   // Listen to Firebase Auth state
@@ -361,6 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         privileges,
         isLoading,
         isFirebaseOnline,
+        isSupabaseOnline,
         signInWithGoogle,
         signOutUser,
         switchRole,

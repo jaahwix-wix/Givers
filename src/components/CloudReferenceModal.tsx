@@ -26,13 +26,13 @@ import {
 import { Student, StudentAcademicRecord, NationalExamPrep, StudentFeeLedger } from '../types';
 import { SCHOOL_INFO } from '../initialData';
 import { 
-  saveAllSchoolRecordsToFirestore, 
-  createReferenceSnapshot, 
-  fetchReferenceSnapshots, 
-  deleteReferenceSnapshot, 
+  saveAllSchoolRecordsToSupabase, 
+  createSupabaseSnapshot, 
+  fetchSupabaseSnapshots, 
+  deleteSupabaseSnapshot, 
   ReferenceSnapshot 
-} from '../services/firestoreSync';
-import firebaseConfig from '../../firebase-applet-config.json';
+} from '../services/supabaseSync';
+import { getSupabaseUrl } from '../supabase';
 import { useAuth } from '../context/AuthContext';
 
 interface CloudReferenceModalProps {
@@ -82,7 +82,7 @@ export default function CloudReferenceModal({
   const loadSnapshots = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchReferenceSnapshots();
+      const data = await fetchSupabaseSnapshots();
       setSnapshots(data);
     } catch (err: any) {
       console.warn('Failed loading snapshots:', err);
@@ -101,7 +101,7 @@ export default function CloudReferenceModal({
       const buses = JSON.parse(localStorage.getItem('sma_buses') || '[]');
       const notices = JSON.parse(localStorage.getItem('sma_class_notices') || '[]');
 
-      const result = await saveAllSchoolRecordsToFirestore({
+      const result = await saveAllSchoolRecordsToSupabase({
         students,
         records,
         examPreps,
@@ -116,13 +116,13 @@ export default function CloudReferenceModal({
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         setLastSyncTime(time);
         setSuccessMsg(
-          `Successfully saved active records into Firebase database! Synced: ${result.counts.students} students, ${result.counts.records} academic files, ${result.counts.fees} fee ledgers, ${result.counts.teachers} faculty.`
+          `Successfully saved active records into Supabase database! Synced: ${result.counts.students} students, ${result.counts.records} academic files, ${result.counts.fees} fee ledgers, ${result.counts.teachers} faculty.`
         );
       } else {
-        setErrorMsg('Failed to save some collections to Firebase. Please check connection.');
+        setErrorMsg('Failed to save some collections to Supabase. Please check connection.');
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Error executing save to Firebase.');
+      setErrorMsg(err?.message || 'Error executing save to Supabase.');
     } finally {
       setIsSavingAll(false);
       setTimeout(() => setSuccessMsg(''), 7000);
@@ -137,21 +137,21 @@ export default function CloudReferenceModal({
       const teachers = JSON.parse(localStorage.getItem('sma_teachers') || '[]');
       const books = JSON.parse(localStorage.getItem('sma_library_books') || '[]');
 
-      const newSnap = await createReferenceSnapshot(
+      const res = await createSupabaseSnapshot(
         archiveTitle || `Reference Snapshot Archive (${new Date().toLocaleDateString('en-GB')})`,
-        archiveNotes || 'Archived records stored in Firebase database for permanent reference.',
+        archiveNotes || 'Archived records stored in Supabase database for permanent reference.',
         user?.displayName || `${SCHOOL_INFO.principalName} (Admin)`,
         { students, records, examPreps, fees, teachers, books }
       );
 
-      if (newSnap) {
-        setSnapshots(prev => [newSnap, ...prev]);
-        setSuccessMsg(`Reference snapshot "${newSnap.title}" successfully archived in Firebase!`);
+      if (res.success && res.snapshot) {
+        setSnapshots(prev => [res.snapshot!, ...prev]);
+        setSuccessMsg(`Reference snapshot "${res.snapshot.title}" successfully archived in Supabase!`);
         setShowArchiveForm(false);
         setArchiveTitle('');
         setArchiveNotes('');
       } else {
-        setErrorMsg('Failed to create reference archive snapshot in Firebase.');
+        setErrorMsg('Failed to create reference archive snapshot in Supabase.');
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Error creating snapshot.');
@@ -162,14 +162,16 @@ export default function CloudReferenceModal({
   };
 
   const handleDeleteSnapshot = async (id: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to delete reference snapshot "${title}" from Firebase?`)) {
+    if (!window.confirm(`Are you sure you want to delete reference snapshot "${title}" from Supabase?`)) {
       return;
     }
-    const ok = await deleteReferenceSnapshot(id);
+    const ok = await deleteSupabaseSnapshot(id);
     if (ok) {
       setSnapshots(prev => prev.filter(s => s.id !== id));
-      setSuccessMsg(`Snapshot "${title}" deleted from Firebase.`);
+      setSuccessMsg(`Snapshot "${title}" deleted from Supabase.`);
       setTimeout(() => setSuccessMsg(''), 4000);
+    } else {
+      setErrorMsg('Failed to delete snapshot from Supabase.');
     }
   };
 
@@ -180,7 +182,7 @@ export default function CloudReferenceModal({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Firebase_Reference_Archive_${snap.title.replace(/\s+/g, '_')}_${snap.id}.json`;
+      link.download = `Supabase_Reference_Archive_${snap.title.replace(/\s+/g, '_')}_${snap.id}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -222,15 +224,15 @@ export default function CloudReferenceModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-black text-lg sm:text-xl text-white">
-                  Firebase Database Reference Center
+                  Supabase Database Reference Center
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Connected
+                  Postgres Live
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                Save active school records directly into your Firebase database for historical audit and reference uses.
+                Save active school records directly into your Supabase database for historical audit and reference uses.
               </p>
             </div>
           </div>
@@ -246,9 +248,9 @@ export default function CloudReferenceModal({
         {/* Database Config Banner */}
         <div className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
-            <Database className="w-3.5 h-3.5 text-indigo-500" />
-            <span className="text-slate-500 dark:text-slate-400">Database ID:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">{firebaseConfig.firestoreDatabaseId}</span>
+            <Database className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-slate-500 dark:text-slate-400">Supabase Endpoint:</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">{getSupabaseUrl().replace('https://', '')}</span>
           </div>
           {lastSyncTime && (
             <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">

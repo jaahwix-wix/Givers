@@ -1596,8 +1596,8 @@ Submit your solutions via the Givers World Mission High School Student Portal.
 
                     {/* Principal Sign-off */}
                     <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-semibold">
-                      <span>CEO/Principal: Evangelist Saint Turay</span>
-                      <span>Telephone: +232 74155000</span>
+                      <span>CEO/Principal: {SCHOOL_INFO.principalName}</span>
+                      <span>Telephone: {SCHOOL_INFO.phone}</span>
                     </div>
                   </div>
                 </div>

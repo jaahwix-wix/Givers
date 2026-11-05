@@ -499,9 +499,9 @@ CEO/Principal, Givers World Mission`;
               Welcome to the academic control panel. Managing student profiles, Continuous Assessment (CA) scores, term positions, school fees, and national exams (NPSE, BECE, WASSCE).
             </p>
             <div className="flex flex-wrap gap-4 mt-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
-              <div><span className="text-slate-200 font-semibold">CEO/Principal:</span> Evangelist Saint Turay</div>
-              <div><span className="text-slate-200 font-semibold">Telephone:</span> 034 055410</div>
-              <div><span className="text-slate-200 font-semibold">Campus:</span> Kambia 2, Northern Province</div>
+              <div><span className="text-slate-200 font-semibold">CEO/Principal:</span> {SCHOOL_INFO.principalName}</div>
+              <div><span className="text-slate-200 font-semibold">Telephone:</span> {SCHOOL_INFO.phone}</div>
+              <div><span className="text-slate-200 font-semibold">Campus:</span> Kambia 1, Northern Province</div>
               <div><span className="text-slate-200 font-semibold">Academic Cycle:</span> 2025/2026</div>
             </div>
           </div>
@@ -574,13 +574,13 @@ CEO/Principal, Givers World Mission`;
                   <div className="min-w-0">
                     <span className="text-[9px] font-bold uppercase text-slate-400 block leading-none">Telephone Contact</span>
                     <span className="font-mono text-xs font-black text-slate-900 truncate block mt-0.5">
-                      Telephone: 034 055410
+                      Telephone: {SCHOOL_INFO.phone}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleCopyPhone('034 055410')}
+                  onClick={() => handleCopyPhone(SCHOOL_INFO.phone)}
                   className="px-2 py-1 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-[10px] font-bold rounded border border-slate-200 transition-colors cursor-pointer flex items-center gap-1 shrink-0"
                   title="Copy telephone number"
                 >
@@ -593,14 +593,14 @@ CEO/Principal, Givers World Mission`;
             {/* Quick Actions */}
             <div className="flex items-center gap-2 pt-2 border-t border-indigo-100/80">
               <a
-                href="tel:034055410"
+                href={`tel:${SCHOOL_INFO.phone.replace(/\s+/g, '')}`}
                 className="flex-1 py-1.5 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
-                <span>Call 034 055410</span>
+                <span>Call {SCHOOL_INFO.phone}</span>
               </a>
               <a
-                href="sms:034055410"
+                href={`sms:${SCHOOL_INFO.phone.replace(/\s+/g, '')}`}
                 className="py-1.5 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-2xs"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
@@ -631,7 +631,7 @@ CEO/Principal, Givers World Mission`;
                 <div>
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Campus Administration Line</span>
                   <p className="font-mono text-xs font-bold text-slate-800 mt-0.5">
-                    Telephone: 034 055410
+                    Telephone: {SCHOOL_INFO.phone}
                   </p>
                 </div>
               </div>

@@ -4,15 +4,9 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  signOut as firebaseSignOut, 
-  User as FirebaseUser 
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, googleProvider, ROLE_PRIVILEGES_MAP, DEMO_PRESET_USERS, testFirestoreConnection } from '../firebase';
+import { supabase } from '../services/supabaseClient';
 import { testSupabaseConnection } from '../supabase';
+import { ROLE_PRIVILEGES_MAP, DEMO_PRESET_USERS } from '../firebase';
 import { UserRole, RolePrivileges, AuthUser } from '../types';
 
 interface AuthContextType {
@@ -23,6 +17,8 @@ interface AuthContextType {
   isFirebaseOnline: boolean;
   isSupabaseOnline: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail?: (email: string, password: string) => Promise<{ success: boolean; user?: any; error?: string }>;
+  signUpWithEmail?: (email: string, password: string, displayName?: string) => Promise<{ success: boolean; user?: any; error?: string }>;
   signOutUser: () => Promise<void>;
   switchRole: (role: UserRole) => void;
   updateUserRole: (targetUserId: string, newRole: UserRole) => Promise<void>;
@@ -86,91 +82,192 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('sma_supabase_config_changed', checkSupabase);
   }, []);
 
-  // Listen to Firebase Auth state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // Determine role: bootstrapped admin emails get 'admin'
-        let assignedRole: UserRole = 'teacher';
-        if (firebaseUser.email && BOOTSTRAPPED_ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase())) {
-          assignedRole = 'admin';
-        } else {
-          // Check local registry or Firestore
-          const existing = userList.find(u => u.uid === firebaseUser.uid || u.email === firebaseUser.email);
-          if (existing) {
-            assignedRole = existing.role;
-          } else {
-            // Check Firestore doc if online
-            try {
-              const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-              if (userDoc.exists() && userDoc.data().role) {
-                assignedRole = userDoc.data().role;
-              }
-            } catch (err) {
-              console.warn('Could not read user profile from Firestore, using default:', err);
-            }
-          }
-        }
+  // Helper to process active Supabase Session
+  const handleSupabaseSession = useCallback(async (sessionUser: any | null) => {
+    if (sessionUser) {
+      // Determine user role
+      let assignedRole: UserRole = 'teacher';
+      const userEmail = sessionUser.email ? sessionUser.email.toLowerCase() : '';
 
-        const authUserObj: AuthUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-          photoURL: firebaseUser.photoURL,
-          role: assignedRole,
-        };
-
-        setUser(authUserObj);
-
-        // Update in-memory registry
-        setUserList(prev => {
-          const index = prev.findIndex(p => p.uid === authUserObj.uid);
-          let updated: AuthUser[];
-          if (index >= 0) {
-            updated = [...prev];
-            updated[index] = { ...updated[index], ...authUserObj };
-          } else {
-            updated = [...prev, authUserObj];
-          }
-          localStorage.setItem('sma_user_registry', JSON.stringify(updated));
-          return updated;
-        });
-
-        // Save to Firestore if admin
-        try {
-          await setDoc(doc(db, 'users', firebaseUser.uid), {
-            id: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName || '',
-            role: assignedRole,
-            photoURL: firebaseUser.photoURL || '',
-            createdAt: new Date().toISOString()
-          }, { merge: true });
-        } catch (e) {
-          // Non-blocking in case of restricted write
-        }
+      if (userEmail && BOOTSTRAPPED_ADMIN_EMAILS.includes(userEmail)) {
+        assignedRole = 'admin';
+      } else if (sessionUser.user_metadata?.role) {
+        assignedRole = sessionUser.user_metadata.role as UserRole;
       } else {
-        // Fallback to active demo account stored in localStorage or default to Super Admin
-        const cachedDemoRole = localStorage.getItem('sma_active_role') as UserRole;
-        if (cachedDemoRole && DEMO_PRESET_USERS[cachedDemoRole]) {
-          setUser(DEMO_PRESET_USERS[cachedDemoRole]);
+        // Check local accounts registry
+        const existing = userList.find(u => u.uid === sessionUser.id || (u.email && u.email.toLowerCase() === userEmail));
+        if (existing) {
+          assignedRole = existing.role;
         } else {
-          setUser(DEMO_PRESET_USERS.admin);
+          // Attempt checking Supabase users document
+          try {
+            const { data } = await supabase
+              .from('school_documents')
+              .select('data')
+              .eq('collection', 'users')
+              .eq('doc_id', sessionUser.id)
+              .maybeSingle();
+
+            if (data?.data?.role) {
+              assignedRole = data.data.role;
+            }
+          } catch (err) {
+            console.warn('[SupabaseAuth] Could not read role from Supabase:', err);
+          }
         }
       }
-      setIsLoading(false);
+
+      const authUserObj: AuthUser = {
+        uid: sessionUser.id,
+        email: sessionUser.email || null,
+        displayName: 
+          sessionUser.user_metadata?.full_name || 
+          sessionUser.user_metadata?.name || 
+          sessionUser.email?.split('@')[0] || 
+          'Authenticated User',
+        photoURL: sessionUser.user_metadata?.avatar_url || sessionUser.user_metadata?.picture || null,
+        role: assignedRole,
+        isCustomRole: false
+      };
+
+      setUser(authUserObj);
+
+      // Update in-memory registry
+      setUserList(prev => {
+        const index = prev.findIndex(p => p.uid === authUserObj.uid || (p.email && p.email === authUserObj.email));
+        let updated: AuthUser[];
+        if (index >= 0) {
+          updated = [...prev];
+          updated[index] = { ...updated[index], ...authUserObj };
+        } else {
+          updated = [...prev, authUserObj];
+        }
+        try {
+          localStorage.setItem('sma_user_registry', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      // Persist profile to Supabase users collection
+      try {
+        await supabase.from('school_documents').upsert({
+          collection: 'users',
+          doc_id: sessionUser.id,
+          data: {
+            id: sessionUser.id,
+            email: sessionUser.email,
+            displayName: authUserObj.displayName,
+            role: assignedRole,
+            photoURL: authUserObj.photoURL,
+            updatedAt: new Date().toISOString()
+          },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'collection,doc_id' });
+      } catch {}
+    } else {
+      // Fallback to active demo account stored in localStorage or default to Super Admin
+      const cachedDemoRole = localStorage.getItem('sma_active_role') as UserRole;
+      if (cachedDemoRole && DEMO_PRESET_USERS[cachedDemoRole]) {
+        setUser(DEMO_PRESET_USERS[cachedDemoRole]);
+      } else {
+        setUser(DEMO_PRESET_USERS.admin);
+      }
+    }
+    setIsLoading(false);
+  }, [userList]);
+
+  // Listen to Supabase Auth State
+  useEffect(() => {
+    // 1. Check existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSupabaseSession(session?.user ?? null);
+    }).catch(err => {
+      console.warn('[SupabaseAuth] getSession note:', err);
+      handleSupabaseSession(null);
     });
 
-    return () => unsubscribe();
-  }, []);
+    // 2. Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      handleSupabaseSession(session?.user ?? null);
+    });
 
-  // Google Sign In
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [handleSupabaseSession]);
+
+  // Supabase Google OAuth Sign In
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
-      await signInWithPopup(auth, googleProvider);
+      const redirectUrl = typeof window !== 'undefined' ? window.location.origin : undefined;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+      if (error) {
+        console.warn('[SupabaseAuth] OAuth notice:', error.message);
+        // Fallback to demo account if OAuth is not configured yet on project
+        setUser(DEMO_PRESET_USERS.admin);
+      }
     } catch (error: any) {
-      console.error('Sign-in failed:', error);
+      console.error('[SupabaseAuth] Sign-in failed:', error);
+      setUser(DEMO_PRESET_USERS.admin);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Supabase Email / Password Sign In
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim()
+      });
+      if (error) throw error;
+      if (data.user) {
+        handleSupabaseSession(data.user);
+      }
+      return { success: true, user: data.user };
+    } catch (error: any) {
+      console.error('[SupabaseAuth] Email login error:', error);
+      return { success: false, error: error.message || 'Login failed' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Supabase Email / Password Sign Up
+  const signUpWithEmail = async (email: string, password: string, displayName?: string) => {
+    try {
+      setIsLoading(true);
+      const isInitialAdmin = BOOTSTRAPPED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password.trim(),
+        options: {
+          data: {
+            full_name: displayName || email.split('@')[0],
+            role: isInitialAdmin ? 'admin' : 'teacher'
+          }
+        }
+      });
+      if (error) throw error;
+      if (data.user) {
+        handleSupabaseSession(data.user);
+      }
+      return { success: true, user: data.user };
+    } catch (error: any) {
+      console.error('[SupabaseAuth] Email registration error:', error);
+      return { success: false, error: error.message || 'Registration failed' };
     } finally {
       setIsLoading(false);
     }
@@ -237,12 +334,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isSessionLocked]);
 
-  // Global Inactivity Event Listeners (only locks if user is actively in the portal)
+  // Global Inactivity Event Listeners
   useEffect(() => {
     const handleUserActivity = () => {
       if (isSessionLocked) return;
       const now = Date.now();
-      // Throttle timestamp updates to at most once every 300ms
       if (now - lastActivityRef.current >= 300) {
         lastActivityRef.current = now;
         setSecondsRemaining(INACTIVITY_TIMEOUT_SECONDS);
@@ -269,9 +365,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Inactivity countdown & lock trigger interval (every 1 second)
+    // Inactivity countdown & lock trigger interval
     const interval = setInterval(() => {
-      // If browsing public website, do not count down portal inactivity
       if (!isPortalActive) {
         setSecondsRemaining(INACTIVITY_TIMEOUT_SECONDS);
         return;
@@ -287,7 +382,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const remaining = Math.max(0, INACTIVITY_TIMEOUT_SECONDS - elapsedSeconds);
       setSecondsRemaining(remaining);
 
-      // Trigger automatic session lock when 1 minute of inactivity elapses inside portal
       if (remaining <= 0) {
         setIsSessionLocked(true);
         sessionStorage.setItem('sma_session_locked', 'true');
@@ -303,11 +397,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isSessionLocked, isPortalActive]);
 
-  // Sign Out
+  // Supabase Sign Out
   const signOutUser = async () => {
     try {
       setIsLoading(true);
-      await firebaseSignOut(auth);
+      await supabase.auth.signOut();
       // Reset to default guest admin demo for testing and unlock session
       setUser(DEMO_PRESET_USERS.admin);
       localStorage.removeItem('sma_active_role');
@@ -316,7 +410,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('sma_session_locked');
       setSecondsRemaining(INACTIVITY_TIMEOUT_SECONDS);
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('[SupabaseAuth] Sign out error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -349,16 +443,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return updated;
     });
 
-    // If updating currently logged in user
     if (user && user.uid === targetUserId) {
       setUser(prev => prev ? { ...prev, role: newRole } : null);
     }
 
-    // Attempt Firestore persistence if possible
+    // Persist role in Supabase
     try {
-      await setDoc(doc(db, 'users', targetUserId), { role: newRole }, { merge: true });
+      await supabase.from('school_documents').upsert({
+        collection: 'users',
+        doc_id: targetUserId,
+        data: { id: targetUserId, role: newRole, updatedAt: new Date().toISOString() },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'collection,doc_id' });
     } catch (err) {
-      console.warn('Firestore update role notification:', err);
+      console.warn('[SupabaseAuth] Update role note:', err);
     }
   };
 
@@ -372,6 +470,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isFirebaseOnline,
         isSupabaseOnline,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
         signOutUser,
         switchRole,
         updateUserRole,

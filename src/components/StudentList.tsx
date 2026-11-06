@@ -51,7 +51,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import StudentIdCardModal from './StudentIdCardModal';
 import StudentAttendancePanel from './StudentAttendancePanel';
 import StudentDisciplinaryPanel from './StudentDisciplinaryPanel';
-import { compressImageBase64 } from '../services/firestoreSync';
+import { compressImageBase64 } from '../services/supabaseSync';
 import { recordDataEntry } from '../utils/referenceLog';
 
 interface StudentListProps {

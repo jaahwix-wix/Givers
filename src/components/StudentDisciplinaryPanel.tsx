@@ -20,7 +20,7 @@ import {
   FileText 
 } from 'lucide-react';
 import { Student } from '../types';
-import { syncFirestoreCollection, batchSaveToFirestore, deleteFromFirestore } from '../services/firestoreSync';
+import { syncSupabaseCollection, batchSaveToSupabase, deleteFromSupabase } from '../services/supabaseSync';
 import { recordDataEntry } from '../utils/referenceLog';
 
 interface StudentDisciplinaryPanelProps {
@@ -63,7 +63,7 @@ export default function StudentDisciplinaryPanel({ students }: StudentDisciplina
   const [formIssuer, setFormIssuer] = useState('');
 
   useEffect(() => {
-    const unsub = syncFirestoreCollection<IncidentRecord>(
+    const unsub = syncSupabaseCollection<IncidentRecord>(
       'incidents',
       'sma_incidents',
       (items) => setIncidents(items),
@@ -88,7 +88,7 @@ export default function StudentDisciplinaryPanel({ students }: StudentDisciplina
     try {
       localStorage.setItem('sma_incidents', JSON.stringify(newIncidents));
     } catch {}
-    batchSaveToFirestore('incidents', newIncidents);
+    batchSaveToSupabase('incidents', newIncidents);
   };
 
   const handleOpenModal = () => {
@@ -148,7 +148,7 @@ export default function StudentDisciplinaryPanel({ students }: StudentDisciplina
     const inc = incidentToDelete;
     const updated = incidents.filter(i => i.id !== inc.id);
     saveIncidents(updated);
-    deleteFromFirestore('incidents', inc.id);
+    deleteFromSupabase('incidents', inc.id);
 
     recordDataEntry({
       type: 'Disciplinary Incident Record',

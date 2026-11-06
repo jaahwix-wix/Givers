@@ -96,6 +96,13 @@ function initClient(): SupabaseClient | null {
   }
 }
 
+export function getSupabaseClient(): SupabaseClient | null {
+  if (!clientInstance) {
+    clientInstance = initClient();
+  }
+  return clientInstance;
+}
+
 export function reinitializeSupabaseClient(): SupabaseClient | null {
   clientInstance = initClient();
   return clientInstance;
@@ -103,7 +110,16 @@ export function reinitializeSupabaseClient(): SupabaseClient | null {
 
 clientInstance = initClient();
 
-export const supabase: SupabaseClient | null = clientInstance;
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabaseClient();
+    if (!client) {
+      return undefined;
+    }
+    const val = (client as any)[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
+  }
+});
 export const isSupabaseConfigured = true;
 
 /**

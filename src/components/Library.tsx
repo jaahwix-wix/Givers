@@ -27,10 +27,10 @@ import {
 } from 'lucide-react';
 import { Student } from '../types';
 import { 
-  syncFirestoreCollection, 
-  saveToFirestore, 
-  deleteFromFirestore 
-} from '../services/firestoreSync';
+  syncSupabaseCollection, 
+  saveToSupabase, 
+  deleteFromSupabase 
+} from '../services/supabaseSync';
 import { recordDataEntry } from '../utils/referenceLog';
 
 interface LibraryProps {
@@ -106,14 +106,14 @@ export default function Library({ students }: LibraryProps) {
   }, [libraryToast]);
 
   useEffect(() => {
-    const unsubBooks = syncFirestoreCollection<BookItem>(
+    const unsubBooks = syncSupabaseCollection<BookItem>(
       'library_books',
       'sma_library_books',
       (items) => setBooks(items),
       DEFAULT_BOOKS
     );
 
-    const unsubCheckouts = syncFirestoreCollection<CheckOutRecord>(
+    const unsubCheckouts = syncSupabaseCollection<CheckOutRecord>(
       'library_checkouts',
       'sma_library_checkouts',
       (items) => setCheckouts(items),
@@ -153,7 +153,7 @@ export default function Library({ students }: LibraryProps) {
           status: 'Overdue' as const,
           fineAmount: fine
         };
-        saveToFirestore('library_checkouts', co.id, modified);
+        saveToSupabase('library_checkouts', co.id, modified);
         return modified;
       } else if (co.status === 'Overdue') {
         const diffTime = Math.abs(new Date(today).getTime() - new Date(co.dueDate).getTime());
@@ -165,7 +165,7 @@ export default function Library({ students }: LibraryProps) {
             ...co,
             fineAmount: fine
           };
-          saveToFirestore('library_checkouts', co.id, modified);
+          saveToSupabase('library_checkouts', co.id, modified);
           return modified;
         }
       }
@@ -227,7 +227,7 @@ export default function Library({ students }: LibraryProps) {
       };
       const updated = books.map(b => b.id === editingBook.id ? updatedBook : b);
       saveBooks(updated);
-      saveToFirestore('library_books', updatedBook.id, updatedBook);
+      saveToSupabase('library_books', updatedBook.id, updatedBook);
     } else {
       // Add Book
       const newBook: BookItem = {
@@ -240,7 +240,7 @@ export default function Library({ students }: LibraryProps) {
         availableCopies: formTotalCopies
       };
       saveBooks([...books, newBook]);
-      saveToFirestore('library_books', newBook.id, newBook);
+      saveToSupabase('library_books', newBook.id, newBook);
 
       recordDataEntry({
         type: 'Library Book Acquisition',
@@ -267,7 +267,7 @@ export default function Library({ students }: LibraryProps) {
     const b = bookToDelete;
     const updated = books.filter(item => item.id !== b.id);
     saveBooks(updated);
-    deleteFromFirestore('library_books', b.id);
+    deleteFromSupabase('library_books', b.id);
 
     recordDataEntry({
       type: 'Library Book Acquisition',
@@ -310,7 +310,7 @@ export default function Library({ students }: LibraryProps) {
     };
     const updatedBooks = books.map(b => b.id === book.id ? updatedBook : b);
     saveBooks(updatedBooks);
-    saveToFirestore('library_books', updatedBook.id, updatedBook);
+    saveToSupabase('library_books', updatedBook.id, updatedBook);
 
     // Create checkout record
     const newRecord: CheckOutRecord = {
@@ -328,7 +328,7 @@ export default function Library({ students }: LibraryProps) {
 
     const updatedCheckouts = [newRecord, ...checkouts];
     saveCheckouts(updatedCheckouts);
-    saveToFirestore('library_checkouts', newRecord.id, newRecord);
+    saveToSupabase('library_checkouts', newRecord.id, newRecord);
 
     recordDataEntry({
       type: 'Library Book Checkout',
@@ -354,7 +354,7 @@ export default function Library({ students }: LibraryProps) {
 
     const updatedCheckouts = checkouts.map(co => co.id === record.id ? updatedRecord : co);
     saveCheckouts(updatedCheckouts);
-    saveToFirestore('library_checkouts', updatedRecord.id, updatedRecord);
+    saveToSupabase('library_checkouts', updatedRecord.id, updatedRecord);
 
     // Restock book available copies
     const book = books.find(b => b.id === record.bookId);
@@ -365,7 +365,7 @@ export default function Library({ students }: LibraryProps) {
       };
       const updatedBooks = books.map(b => b.id === book.id ? updatedBook : b);
       saveBooks(updatedBooks);
-      saveToFirestore('library_books', updatedBook.id, updatedBook);
+      saveToSupabase('library_books', updatedBook.id, updatedBook);
     }
     setLibraryToast({ type: 'success', message: `Book returned and inventory restocked.` });
   };
@@ -385,7 +385,7 @@ export default function Library({ students }: LibraryProps) {
       fineAmount: 0
     } : co);
     saveCheckouts(updated);
-    saveToFirestore('library_checkouts', target.id, { ...target, fineAmount: 0 });
+    saveToSupabase('library_checkouts', target.id, { ...target, fineAmount: 0 });
     setLibraryToast({ type: 'success', message: `Overdue fine for ${target.studentName} waived successfully.` });
     setCheckoutToWaive(null);
   };

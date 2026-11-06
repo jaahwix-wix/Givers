@@ -25,11 +25,11 @@ import {
 import { Student, StudentClass } from '../types';
 import { CLASSES_LIST } from '../constants';
 import { 
-  syncFirestoreCollection, 
-  batchSaveToFirestore, 
-  saveToFirestore, 
-  deleteFromFirestore 
-} from '../services/firestoreSync';
+  syncSupabaseCollection, 
+  batchSaveToSupabase, 
+  saveToSupabase, 
+  deleteFromSupabase 
+} from '../services/supabaseSync';
 
 interface BusManagementProps {
   students: Student[];
@@ -74,9 +74,9 @@ export default function BusManagement({ students }: BusManagementProps) {
   const [formCapacity, setFormCapacity] = useState(30);
   const [formStatus, setFormStatus] = useState<SchoolBus['status']>('Idle');
 
-  // Load state from Cloud Firestore or local storage
+  // Load state from Supabase or local storage
   useEffect(() => {
-    const unsubBuses = syncFirestoreCollection<SchoolBus>(
+    const unsubBuses = syncSupabaseCollection<SchoolBus>(
       'buses',
       'sma_buses',
       (items) => setBuses(items),
@@ -113,7 +113,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     try {
       localStorage.setItem('sma_buses', JSON.stringify(updatedBuses));
     } catch {}
-    batchSaveToFirestore('buses', updatedBuses);
+    batchSaveToSupabase('buses', updatedBuses);
   };
 
   const saveAssignments = (updatedAssignments: Record<string, string>) => {
@@ -121,7 +121,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     try {
       localStorage.setItem('sma_bus_assignments', JSON.stringify(updatedAssignments));
     } catch {}
-    saveToFirestore('bus_assignments', 'active_allocations', {
+    saveToSupabase('bus_assignments', 'active_allocations', {
       id: 'active_allocations',
       assignments: updatedAssignments,
       updatedAt: new Date().toISOString()
@@ -197,7 +197,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     const b = busToDelete;
     const updatedBuses = buses.filter(item => item.id !== b.id);
     saveBuses(updatedBuses);
-    deleteFromFirestore('buses', b.id);
+    deleteFromSupabase('buses', b.id);
     
     // Remove assignments
     const updatedAssignments = { ...assignments };

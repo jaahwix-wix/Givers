@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { testSupabaseConnection } from '../supabase';
-import { ROLE_PRIVILEGES_MAP, DEMO_PRESET_USERS } from '../firebase';
+import { ROLE_PRIVILEGES_MAP, DEMO_PRESET_USERS } from '../constants';
 import { UserRole, RolePrivileges, AuthUser } from '../types';
 
 interface AuthContextType {

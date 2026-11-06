@@ -42,7 +42,7 @@ interface GlobalHeaderProps {
 }
 
 export default function GlobalHeader({ students, fees, activeTab, onNavigate, onOpenPrivileges, onNavigateToWebsite }: GlobalHeaderProps) {
-  const { user, role, privileges, isFirebaseOnline, lockSession, secondsRemaining, resetInactivityTimer } = useAuth();
+  const { user, role, privileges, isSupabaseOnline, lockSession, secondsRemaining, resetInactivityTimer } = useAuth();
   const { alerts, unreadCount, markAsRead, markAllAsRead, addAnnouncement } = useNotifications({ students, fees });
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);

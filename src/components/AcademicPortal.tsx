@@ -39,7 +39,7 @@ import {
 } from 'recharts';
 import { Student, StudentAcademicRecord, NationalExamPrep, SubjectGrade, StudentClass } from '../types';
 import { CLASSES_LIST, getSubjectsForClass, calculateGrade } from '../constants';
-import { batchSaveToFirestore } from '../services/firestoreSync';
+import { batchSaveToSupabase } from '../services/supabaseSync';
 
 interface AcademicPortalProps {
   students: Student[];
@@ -92,24 +92,24 @@ export default function AcademicPortal({
   const [editConduct, setEditConduct] = useState('');
   const [editAttendance, setEditAttendance] = useState({ totalDays: 70, presentDays: 65 });
 
-  // Sync all academic records directly to Firebase for reference
-  const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
+  // Sync all academic records directly to Supabase for reference
+  const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
-  const handleSyncGradesToFirebase = async () => {
-    setIsSyncingFirebase(true);
+  const handleSyncGradesToSupabase = async () => {
+    setIsSyncingSupabase(true);
     setSyncFeedback(null);
     try {
-      const ok = await batchSaveToFirestore('academic_records', records, 'studentId');
+      const ok = await batchSaveToSupabase('academic_records', records, 'studentId');
       if (ok) {
-        setSyncFeedback(`Successfully saved all ${records.length} academic files to Firebase database for reference!`);
+        setSyncFeedback(`Successfully saved all ${records.length} academic files to Supabase database for reference!`);
       } else {
-        setSyncFeedback('Failed saving academic records to Firebase.');
+        setSyncFeedback('Failed saving academic records to Supabase.');
       }
     } catch (e: any) {
-      setSyncFeedback(e?.message || 'Error saving to Firebase.');
+      setSyncFeedback(e?.message || 'Error saving to Supabase.');
     } finally {
-      setIsSyncingFirebase(false);
+      setIsSyncingSupabase(false);
       setTimeout(() => setSyncFeedback(null), 5000);
     }
   };
@@ -445,14 +445,14 @@ export default function AcademicPortal({
 
         <button
           type="button"
-          disabled={isSyncingFirebase}
-          onClick={handleSyncGradesToFirebase}
+          disabled={isSyncingSupabase}
+          onClick={handleSyncGradesToSupabase}
           className="flex items-center justify-center gap-1.5 py-2 px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs transition-colors shadow-2xs cursor-pointer disabled:opacity-50 shrink-0 self-end sm:self-auto"
-          title="Save all continuous assessment marks into Firebase database for reference uses"
-          id="academic-save-firebase-btn"
+          title="Save all continuous assessment marks into Supabase database for reference uses"
+          id="academic-save-supabase-btn"
         >
-          <CloudUpload className={`w-3.5 h-3.5 ${isSyncingFirebase ? 'animate-bounce' : ''}`} />
-          <span>{isSyncingFirebase ? 'Saving...' : 'Save Grades to Firebase (Reference)'}</span>
+          <CloudUpload className={`w-3.5 h-3.5 ${isSyncingSupabase ? 'animate-bounce' : ''}`} />
+          <span>{isSyncingSupabase ? 'Saving...' : 'Save Grades to Supabase (Reference)'}</span>
         </button>
       </div>
 

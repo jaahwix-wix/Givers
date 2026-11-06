@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { ROLE_PRIVILEGES_MAP } from '../firebase';
+import { ROLE_PRIVILEGES_MAP } from '../constants';
 import { motion } from 'motion/react';
 
 interface PrivilegesModalProps {
@@ -43,7 +43,7 @@ export default function PrivilegesModal({ isOpen, onClose }: PrivilegesModalProp
     updateUserRole, 
     userList, 
     can,
-    isFirebaseOnline
+    isSupabaseOnline
   } = useAuth();
 
   const [activeSubTab, setActiveSubTab] = useState<'matrix' | 'users'>('matrix');
@@ -134,8 +134,8 @@ export default function PrivilegesModal({ isOpen, onClose }: PrivilegesModalProp
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-lg text-white">Authentication & Privilege Management</h3>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isFirebaseOnline ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
-                  {isFirebaseOnline ? 'Firebase Connected' : 'Local Mode'}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isSupabaseOnline ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
+                  {isSupabaseOnline ? 'Supabase Connected' : 'Local Mode'}
                 </span>
               </div>
               <p className="text-slate-400 text-xs">Role-Based Access Control (RBAC) & User Security Matrix</p>

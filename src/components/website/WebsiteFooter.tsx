@@ -24,7 +24,7 @@ import {
   ExternalLink,
   Heart
 } from 'lucide-react';
-import schoolLogo from '../../assets/logo.jpg';
+import SchoolCrestEmblem from './SchoolCrestEmblem';
 import { SCHOOL_INFO } from '../../initialData';
 
 interface WebsiteFooterProps {
@@ -89,17 +89,9 @@ export default function WebsiteFooter({ onNavigate }: WebsiteFooterProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           
-          {/* Column 1: School Identity & Physical Address */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden p-1 bg-white border border-emerald-500 shadow-md flex-shrink-0">
-                <img 
-                  src={schoolLogo} 
-                  alt="Givers World Mission Diplomats Academy & College Crest" 
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              <SchoolCrestEmblem size="md" />
               <div>
                 <h3 className="text-white font-black text-base tracking-tight leading-tight">
                   GIVERS WORLD MISSION
@@ -220,7 +212,7 @@ export default function WebsiteFooter({ onNavigate }: WebsiteFooterProps) {
                   className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-3 h-3 text-emerald-500" />
-                  Public Landing & Slideshow
+                  Public Landing Page
                 </button>
               </li>
               <li>

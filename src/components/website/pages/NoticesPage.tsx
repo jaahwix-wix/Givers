@@ -21,8 +21,7 @@ import {
   FileText
 } from 'lucide-react';
 import { ClassNotice } from '../../../types';
-import { SCHOOL_INFO } from '../../../initialData';
-import schoolLogo from '../../../assets/logo.jpg';
+import SchoolCrestEmblem from '../SchoolCrestEmblem';
 
 interface NoticesPageProps {
   notices: ClassNotice[];
@@ -212,14 +211,7 @@ export default function NoticesPage({ notices }: NoticesPageProps) {
             {/* Modal Header */}
             <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-emerald-500 p-0.5 bg-white">
-                  <img 
-                    src={schoolLogo} 
-                    alt="Logo" 
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain" 
-                  />
-                </div>
+                <SchoolCrestEmblem size="sm" />
                 <div>
                   <h4 className="text-xs font-black text-slate-900 uppercase">
                     Givers World Mission Diplomats Academy & College

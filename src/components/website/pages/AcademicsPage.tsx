@@ -17,23 +17,12 @@ import {
   ShieldCheck,
   ChevronRight
 } from 'lucide-react';
-import { getSchoolPhotoSrc, onSchoolPhotosUpdated } from '../../../utils/photoManager';
-
 interface AcademicsPageProps {
   onNavigate: (page: string) => void;
 }
 
 export default function AcademicsPage({ onNavigate }: AcademicsPageProps) {
   const [activeTier, setActiveTier] = useState<'all' | 'nursery' | 'primary' | 'jss' | 'sss' | 'college'>('all');
-  const [, setUpdateTrigger] = useState(0);
-
-  useEffect(() => {
-    const unsub = onSchoolPhotosUpdated(() => setUpdateTrigger(prev => prev + 1));
-    return unsub;
-  }, []);
-
-  const classroomImg = getSchoolPhotoSrc('IMG-20260918-WA0027.jpg');
-  const nurseryGradImg = getSchoolPhotoSrc('IMG-20260918-WA0029.jpg');
 
   const TIERS = [
     {
@@ -292,46 +281,48 @@ export default function AcademicsPage({ onNavigate }: AcademicsPageProps) {
         ))}
       </section>
 
-      {/* Classroom and Computer Lab Visual Teaser */}
+      {/* Academic Excellence Methodology & Curriculum Framework */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="h-56 rounded-2xl overflow-hidden">
-            <img 
-              src={classroomImg} 
-              alt="Classroom learning at Givers World Mission Diplomats Academy in Kambia 1" 
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h4 className="text-lg font-black text-slate-900">
-            Interactive Classroom Instruction
-          </h4>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Every classroom at our Kambia 1 campus is designed with spacious ventilation, ergonomic desks, and teacher whiteboards to foster active student engagement and debate.
-          </p>
-        </div>
-
-        <div className="rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="h-56 rounded-2xl overflow-hidden bg-slate-900">
-            <img 
-              src={nurseryGradImg} 
-              alt="Early childhood and nursery graduation in white robes at Givers World Mission in Kambia 1" 
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.opacity = '0.4';
-              }}
-            />
+        <div className="rounded-3xl bg-white border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+            <BookOpen className="w-6 h-6" />
           </div>
           <div className="flex items-center justify-between">
             <h4 className="text-lg font-black text-slate-900">
-              Foundational & Nursery Graduations
+              Interactive Classroom Pedagogy
             </h4>
-            <span className="text-[10px] font-mono text-slate-400">IMG-20260918-WA0029.jpg</span>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+              Holistic Learning
+            </span>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Celebrating literacy and academic milestones from early childhood education in white cap and gown regalia to prepare pupils for primary entrance exams.
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Every classroom at our Kambia 1 campus is designed with spacious ventilation, ergonomic desks, and teacher whiteboards to foster active student engagement, debate, and individual student mentoring.
           </p>
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Regular assessments, continuous homework feedback, and moral coaching</span>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-white border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+            <GraduationCap className="w-6 h-6" />
+          </div>
+          <div className="flex items-center justify-between">
+            <h4 className="text-lg font-black text-slate-900">
+              Graduation Milestones & College Pathways
+            </h4>
+            <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
+              Accredited Diplomas
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Celebrating academic milestones from early childhood education through junior secondary BECE, senior secondary WASSCE, and college diploma graduations in Kambia 1.
+          </p>
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
+            <CheckCircle2 className="w-4 h-4 text-purple-600" />
+            <span>Recognized certificates and pathways to national universities and employment</span>
+          </div>
         </div>
       </section>
     </div>

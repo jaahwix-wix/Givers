@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Monitor, 
   BookOpen, 
@@ -17,26 +17,15 @@ import {
   CheckCircle2,
   MapPin,
   ArrowRight,
-  Camera
+  GraduationCap
 } from 'lucide-react';
-import { getSchoolPhotoSrc, onSchoolPhotosUpdated } from '../../../utils/photoManager';
+import SchoolCrestEmblem from '../SchoolCrestEmblem';
 
 interface FacilitiesPageProps {
   onNavigate: (page: string) => void;
 }
 
 export default function FacilitiesPage({ onNavigate }: FacilitiesPageProps) {
-  const [, setUpdateTrigger] = useState(0);
-
-  useEffect(() => {
-    const unsub = onSchoolPhotosUpdated(() => setUpdateTrigger(prev => prev + 1));
-    return unsub;
-  }, []);
-
-  const scholarsImg = getSchoolPhotoSrc('IMG-20260918-WA0028.jpg');
-  const assemblyImg = getSchoolPhotoSrc('IMG-20260918-WA0025.jpg');
-  const classroomImg = getSchoolPhotoSrc('IMG-20260918-WA0027.jpg');
-
   return (
     <div className="space-y-12 pb-10" id="website-facilities-page">
       {/* Banner */}
@@ -54,26 +43,26 @@ export default function FacilitiesPage({ onNavigate }: FacilitiesPageProps) {
         </div>
       </section>
 
-      {/* 1. SPOTLIGHT: SCHOLARS DELEGATION & CAMPUS LANDMARK */}
+      {/* 1. SPOTLIGHT: CAMPUS LANDMARK & HERITAGE */}
       <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-md border border-slate-100 relative bg-slate-900">
-            <img 
-              src={scholarsImg} 
-              alt="Junior Secondary Scholars in ceremonial blazers with faculty at Givers World Mission in Kambia 1" 
-              referrerPolicy="no-referrer"
-              className="w-full h-80 sm:h-96 object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.opacity = '0.4';
-              }}
-            />
-            <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-slate-900/85 text-white text-xs font-black backdrop-blur-md flex items-center gap-1.5 border border-slate-700">
-              <Camera className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Kolenten Landmark & Secondary Scholars</span>
+          <div className="lg:col-span-5 rounded-2xl p-8 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white border border-slate-800 shadow-md flex flex-col items-center text-center justify-center space-y-4">
+            <SchoolCrestEmblem size="xl" className="w-36 h-36" />
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-white">Kolenten Campus Grounds</h3>
+              <p className="text-xs text-emerald-300 font-bold">Kambia 1, Northern Province</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <span className="px-3 py-1 rounded-full bg-emerald-800/60 text-emerald-200 text-[11px] font-bold border border-emerald-700/60">
+                Multi-Acre Safe Compound
+              </span>
+              <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold border border-white/10">
+                MBSDSE Accredited
+              </span>
             </div>
           </div>
 
-          <div className="lg:col-span-6 space-y-4">
+          <div className="lg:col-span-7 space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Campus Discipline & Heritage</span>
@@ -216,50 +205,46 @@ export default function FacilitiesPage({ onNavigate }: FacilitiesPageProps) {
 
       {/* 3. CONVOCATION HALL & CLASSROOM EXAMINATION ENVIRONMENTS */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="h-60 rounded-2xl overflow-hidden bg-slate-900">
-            <img 
-              src={assemblyImg} 
-              alt="Assembly Hall Convocation with Orchestra Drums at Givers World Mission in Kambia 1" 
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.opacity = '0.4';
-              }}
-            />
+        <div className="rounded-3xl bg-white border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+            <Users className="w-6 h-6" />
           </div>
           <div className="flex items-center justify-between">
             <h4 className="text-lg font-black text-slate-900">
               Assembly & Convocation Hall
             </h4>
-            <span className="text-[10px] font-mono text-slate-400">IMG-20260918-WA0025.jpg</span>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+              1,000+ Capacity
+            </span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
             Our multi-purpose campus auditorium accommodates over 1,000 guests for annual graduation commencement, Christian morning worship devotions, and music orchestra assemblies.
           </p>
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Equipped with acoustic sound system and elevated stage</span>
+          </div>
         </div>
 
-        <div className="rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xs p-6 space-y-4">
-          <div className="h-60 rounded-2xl overflow-hidden bg-slate-900">
-            <img 
-              src={classroomImg} 
-              alt="Primary pupils seated in classroom writing tests at Givers World Mission in Kambia 1" 
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.opacity = '0.4';
-              }}
-            />
+        <div className="rounded-3xl bg-white border border-slate-200 shadow-xs p-6 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+            <BookOpen className="w-6 h-6" />
           </div>
           <div className="flex items-center justify-between">
             <h4 className="text-lg font-black text-slate-900">
-              Primary Examination Classrooms
+              Primary & Secondary Examination Classrooms
             </h4>
-            <span className="text-[10px] font-mono text-slate-400">IMG-20260918-WA0027.jpg</span>
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
+              32+ Classrooms
+            </span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Authentic classroom setting featuring dual-seat wooden desks, blackboard instruction, student coursework displays, and quiet examination conditions in Kambia 1.
+            Spacious classroom setting featuring dual-seat wooden desks, whiteboard instruction, student coursework displays, and quiet examination conditions adhering to WAEC guidelines.
           </p>
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
+            <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <span>Ergonomic student seating & well-ventilated architectural design</span>
+          </div>
         </div>
       </section>
 
@@ -274,9 +259,10 @@ export default function FacilitiesPage({ onNavigate }: FacilitiesPageProps) {
         <button
           type="button"
           onClick={() => onNavigate('contact')}
-          className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-colors cursor-pointer"
+          className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm transition-colors inline-flex items-center gap-2 shadow-lg cursor-pointer"
         >
-          Contact Registrar for Campus Tour
+          <span>Contact Campus Secretariat</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </section>
     </div>

@@ -17,7 +17,7 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
-import schoolLogo from '../../../assets/logo.jpg';
+import SchoolCrestEmblem from '../SchoolCrestEmblem';
 import { SCHOOL_INFO } from '../../../initialData';
 
 interface AboutPageProps {
@@ -43,18 +43,10 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
         </div>
       </section>
 
-      {/* Official Crest & Coat of Arms Explanation */}
       <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-4 flex flex-col items-center text-center">
-            <div className="w-52 h-52 sm:w-60 sm:h-60 rounded-3xl p-3 bg-emerald-50/50 border-4 border-emerald-600 shadow-xl overflow-hidden flex items-center justify-center">
-              <img 
-                src={schoolLogo} 
-                alt="Official School Crest of Givers World Mission Diplomats Academy Kambia"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <SchoolCrestEmblem size="xl" className="w-48 h-48 sm:w-56 sm:h-56 shadow-2xl" />
             <span className="mt-4 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-xs">
               Official Heraldic Crest
             </span>
@@ -202,82 +194,59 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
         </div>
       </section>
 
-      {/* Authentic Campus & Student Life Photo Showcase */}
+      {/* Core Institutional Pillars & Values */}
       <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-xs font-black text-emerald-700 uppercase tracking-wider">
-              Authentic Campus Life in Kambia 1
-            </span>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              Pupils, Scholars & Convocation Gallery
-            </h2>
-            <p className="text-xs text-slate-500">
-              Photographic archives of daily academic life and graduation commencements at G.W.D.A
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onNavigate('gallery')}
-            className="self-start sm:self-auto px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span>View All 10 Photos in Gallery</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+        <div>
+          <span className="text-xs font-black text-emerald-700 uppercase tracking-wider">
+            Foundational Principles
+          </span>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+            Core Pillars of the Eagles Squad
+          </h2>
+          <p className="text-xs text-slate-500">
+            The philosophical benchmarks guiding holistic development at Givers World Mission Diplomats Academy & College
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-xs group">
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img 
-                src="/school-photos/IMG-20260918-WA0028.jpg" 
-                alt="Junior Secondary Scholars in official blazer uniforms" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
-                <span className="text-xs font-black text-white">Secondary Scholars in Blazers</span>
-              </div>
+          <div className="rounded-2xl p-6 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5" />
             </div>
+            <h3 className="font-black text-sm text-slate-900">Christian Moral Integrity</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Devotional assemblies, ethical discipline, and God-fearing character formation for every young scholar.
+            </p>
           </div>
 
-          <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-xs group">
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img 
-                src="/school-photos/IMG-20260918-WA0027.jpg" 
-                alt="Primary pupils seated at desks writing exam in classroom" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
-                <span className="text-xs font-black text-white">Classroom Exam in Kambia 1</span>
-              </div>
+          <div className="rounded-2xl p-6 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+              <Award className="w-5 h-5" />
             </div>
+            <h3 className="font-black text-sm text-slate-900">National Exam Distinction</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Rigorous preparation for NPSE, BECE, and WASSCE with continuous mock trials and syllabus mastery.
+            </p>
           </div>
 
-          <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-xs group">
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img 
-                src="/school-photos/IMG-20260918-WA0020.jpg" 
-                alt="Commencement ceremony graduation lineup" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
-                <span className="text-xs font-black text-white">Commencement Graduation</span>
-              </div>
+          <div className="rounded-2xl p-6 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+              <BookOpen className="w-5 h-5" />
             </div>
+            <h3 className="font-black text-sm text-slate-900">Diplomatic & Civic Leadership</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Public speaking, debate competitions, community volunteering, and global awareness in Kambia 1.
+            </p>
           </div>
 
-          <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-xs group">
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img 
-                src="/school-photos/IMG-20260918-WA0022.jpg" 
-                alt="College Division female scholars in emerald green academic robes" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
-                <span className="text-xs font-black text-white">College Division Diplomats</span>
-              </div>
+          <div className="rounded-2xl p-6 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+              <GraduationCap className="w-5 h-5" />
             </div>
+            <h3 className="font-black text-sm text-slate-900">College Career Pathways</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Accredited Higher National Diplomas and vocational certificates providing practical employment readiness.
+            </p>
           </div>
         </div>
       </section>

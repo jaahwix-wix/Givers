@@ -22,9 +22,8 @@ import {
   EyeOff,
   UserCheck,
   Building2
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import schoolLogo from '../../../assets/logo.jpg';
+import SchoolCrestEmblem from '../SchoolCrestEmblem';
 import { UserRole, Student, Teacher } from '../../../types';
 import { SCHOOL_INFO } from '../../../initialData';
 import { 
@@ -334,14 +333,7 @@ export default function PortalLoginPage({
 
         {/* Institution Brand Header */}
         <div className="pt-8 pb-6 px-6 sm:px-10 text-center border-b border-slate-100 bg-slate-50/50">
-          <div className="w-20 h-20 rounded-3xl p-1 bg-white border-2 border-emerald-600 shadow-sm mx-auto overflow-hidden mb-3">
-            <img 
-              src={schoolLogo} 
-              alt="Givers World Mission Crest" 
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <SchoolCrestEmblem size="lg" className="mx-auto mb-3" />
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
             Institutional Management & Academic Portals
           </h1>

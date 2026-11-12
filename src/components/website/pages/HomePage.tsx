@@ -26,10 +26,9 @@ import {
 import HomeSlideshow from '../HomeSlideshow';
 import { SCHOOL_INFO } from '../../../initialData';
 import { ClassNotice } from '../../../types';
-import schoolLogo from '../../../assets/logo.jpg';
+import SchoolCrestEmblem from '../SchoolCrestEmblem';
 import ScrollFadeIn from '../ScrollFadeIn';
 import SchoolNewsSection from '../SchoolNewsSection';
-import EventsGallery from '../EventsGallery';
 import ContactSection from '../ContactSection';
 
 interface HomePageProps {
@@ -245,14 +244,7 @@ export default function HomePage({ onNavigate, notices }: HomePageProps) {
         <section className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-10 border border-slate-800 shadow-xl" id="principal-welcome-section">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-4 flex flex-col items-center text-center">
-              <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl p-1 bg-white border-4 border-emerald-500 shadow-2xl overflow-hidden mb-4">
-                <img 
-                  src={schoolLogo} 
-                  alt="Givers World Mission Crest Logo" 
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              <SchoolCrestEmblem size="xl" className="mb-4" />
               <h4 className="text-lg font-black text-white">
                 {SCHOOL_INFO.principalName}
               </h4>
@@ -311,9 +303,6 @@ export default function HomePage({ onNavigate, notices }: HomePageProps) {
 
       {/* 5. SCHOOL NEWS & RECENT ANNOUNCEMENTS SECTION (NO LOGIN REQUIRED) */}
       <SchoolNewsSection />
-
-      {/* 6. EVENTS GALLERY: RESPONSIVE MASONRY GRID OF CAMPUS LIFE */}
-      <EventsGallery />
 
       {/* 7. KEY METRICS OF EXCELLENCE */}
       <ScrollFadeIn direction="up">

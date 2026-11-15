@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Student, StudentFeeLedger, SchoolAnnouncement, NotificationAlert, Assignment, Submission } from '../types';
-import { LIVE_MODE_INDICATOR_KEY } from '../utils/dataStore';
+import { syncFirestoreCollection, saveToFirestore, deleteFromFirestore } from '../services/firebaseSync';
 
 interface UseNotificationsProps {
   students: Student[];
@@ -91,10 +91,30 @@ export function useNotifications({ students, fees }: UseNotificationsProps) {
     window.addEventListener('storage', syncWithStorage);
     window.addEventListener('sma_database_wiped', syncWithStorage);
     window.addEventListener('sma_database_loaded_demo', syncWithStorage);
+
+    const unsubAnnouncements = syncFirestoreCollection<SchoolAnnouncement>(
+      'announcements',
+      'sma_announcements',
+      setAnnouncements
+    );
+    const unsubAssignments = syncFirestoreCollection<Assignment>(
+      'assignments',
+      'sma_assignments',
+      setAssignments
+    );
+    const unsubSubmissions = syncFirestoreCollection<Submission>(
+      'submissions',
+      'sma_submissions',
+      setSubmissions
+    );
+
     return () => {
       window.removeEventListener('storage', syncWithStorage);
       window.removeEventListener('sma_database_wiped', syncWithStorage);
       window.removeEventListener('sma_database_loaded_demo', syncWithStorage);
+      unsubAnnouncements();
+      unsubAssignments();
+      unsubSubmissions();
     };
   }, []);
 
@@ -112,7 +132,7 @@ export function useNotifications({ students, fees }: UseNotificationsProps) {
         timestamp: ann.date,
         priority: ann.priority === 'urgent' ? 'urgent' : 'normal',
         read: readIds.includes(`ann-${ann.id}`),
-        linkTab: 'announcements',
+        linkTab: 'notices',
         linkArgs: { announcementId: ann.id }
       });
     });
@@ -251,6 +271,7 @@ export function useNotifications({ students, fees }: UseNotificationsProps) {
       window.dispatchEvent(new Event('storage'));
       return updated;
     });
+    saveToFirestore('announcements', created.id, created);
     return created;
   }, []);
 
@@ -265,6 +286,7 @@ export function useNotifications({ students, fees }: UseNotificationsProps) {
       window.dispatchEvent(new Event('storage'));
       return updated;
     });
+    deleteFromFirestore('announcements', id);
   }, []);
 
   return {

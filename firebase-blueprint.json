@@ -67,6 +67,9 @@
     "/announcements/{announcementId}": {
       "description": "School notices, principal broadcasts, and alerts"
     },
+    "/class_notices/{noticeId}": {
+      "description": "Class-specific bulletins and automated GSM SMS broadcast records"
+    },
     "/buses/{busId}": {
       "description": "School transport bus fleet and route statuses"
     },
@@ -79,11 +82,20 @@
     "/incidents/{incidentId}": {
       "description": "Student disciplinary cases and counsel tracking"
     },
+    "/library_books/{bookId}": {
+      "description": "School library book catalog inventory"
+    },
+    "/library_checkouts/{checkoutId}": {
+      "description": "Library lending checkouts, returns, and overdue fines"
+    },
     "/system_settings/{settingId}": {
       "description": "Institutional configuration, academic year, and term schedules"
     },
     "/reference_audit_logs/{logId}": {
       "description": "Permanent institutional data entry reference records and audit history"
+    },
+    "/reference_snapshots/{snapshotId}": {
+      "description": "Archived historical snapshots of school records for audit reference"
     }
   }
 }

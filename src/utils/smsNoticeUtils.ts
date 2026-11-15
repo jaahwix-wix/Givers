@@ -5,6 +5,7 @@
 
 import { Student, StudentClass, ClassNotice, NoticeSmsLog } from '../types';
 import { SCHOOL_INFO } from '../initialData';
+import { saveToFirestore } from '../services/firebaseSync';
 
 const NOTICES_STORAGE_KEY = 'sma_class_notices';
 const NOTICE_SMS_LOGS_KEY = 'sma_notice_sms_logs';
@@ -158,6 +159,9 @@ export function broadcastNoticeSMS(notice: ClassNotice, registeredStudents: Stud
     updatedNotices = [noticeWithSMS, ...existingNotices];
   }
   localStorage.setItem(NOTICES_STORAGE_KEY, JSON.stringify(updatedNotices));
+
+  // Persist to Firebase Firestore hosting database
+  saveToFirestore('class_notices', noticeWithSMS.id, noticeWithSMS);
 
   // Dispatch event so all components update immediately
   window.dispatchEvent(new CustomEvent('sma_class_notice_dispatched', { detail: { notice: noticeWithSMS, smsLogs: newLogs } }));

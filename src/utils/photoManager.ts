@@ -144,20 +144,11 @@ export function getSyncedPhotosCount(): number {
   return ATTACHED_SCHOOL_PHOTOS.length;
 }
 
-// Save a photo Data URL to local storage and push to server disk
+// Save a photo Data URL to local storage
 export function saveSchoolPhoto(filename: string, dataUrl: string) {
   try {
     localStorage.setItem(`${STORAGE_PREFIX}${filename}`, dataUrl);
     window.dispatchEvent(new CustomEvent(SYNC_EVENT_NAME, { detail: { filename } }));
-
-    // Persist to backend server so it replaces file on disk
-    fetch('/api/upload-photo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename, dataUrl })
-    }).catch(err => {
-      console.warn('Backend disk photo save non-fatal:', err);
-    });
   } catch (e) {
     console.error('Failed to save photo to localStorage', e);
   }

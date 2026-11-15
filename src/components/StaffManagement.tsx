@@ -46,11 +46,11 @@ import { ensureTeacherAccessCode, generateTeacherCode } from '../utils/codeGener
 import { SCHOOL_INFO } from '../initialData';
 import { useAuth } from '../context/AuthContext';
 import { 
-  syncSupabaseCollection, 
-  saveToSupabase, 
-  deleteFromSupabase, 
-  batchSaveToSupabase 
-} from '../services/supabaseSync';
+  syncFirestoreCollection, 
+  saveToFirestore, 
+  deleteFromFirestore, 
+  batchSaveToFirestore 
+} from '../services/firebaseSync';
 import { recordDataEntry } from '../utils/referenceLog';
 
 interface StaffManagementProps {
@@ -123,9 +123,9 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
     }
   }, [staffToastNotice]);
 
-  // Load States from Supabase & LocalStorage
+  // Load States from Cloud Firestore & LocalStorage
   useEffect(() => {
-    const unsubTeachers = syncSupabaseCollection<Teacher>(
+    const unsubTeachers = syncFirestoreCollection<Teacher>(
       'teachers',
       'sma_teachers',
       (items) => {
@@ -138,14 +138,14 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
       []
     );
 
-    const unsubAssignments = syncSupabaseCollection<Assignment>(
+    const unsubAssignments = syncFirestoreCollection<Assignment>(
       'assignments',
       'sma_assignments',
       (items) => setAssignments(items),
       []
     );
 
-    const unsubSubmissions = syncSupabaseCollection<Submission>(
+    const unsubSubmissions = syncFirestoreCollection<Submission>(
       'submissions',
       'sma_submissions',
       (items) => setSubmissions(items),
@@ -168,13 +168,13 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
     };
   }, []);
 
-  // Save Helpers with Supabase Persistence
+  // Save Helpers with Cloud Firestore Persistence
   const saveTeachers = (newTeachers: Teacher[]) => {
     setTeachers(newTeachers);
     try {
       localStorage.setItem('sma_teachers', JSON.stringify(newTeachers));
     } catch {}
-    batchSaveToSupabase('teachers', newTeachers);
+    batchSaveToFirestore('teachers', newTeachers);
   };
 
   const saveAssignments = (newAssigns: Assignment[]) => {
@@ -182,7 +182,7 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
     try {
       localStorage.setItem('sma_assignments', JSON.stringify(newAssigns));
     } catch {}
-    batchSaveToSupabase('assignments', newAssigns);
+    batchSaveToFirestore('assignments', newAssigns);
   };
 
   const saveSubmissions = (newSubs: Submission[]) => {
@@ -190,7 +190,7 @@ export default function StaffManagement({ students, onNavigate }: StaffManagemen
     try {
       localStorage.setItem('sma_submissions', JSON.stringify(newSubs));
     } catch {}
-    batchSaveToSupabase('submissions', newSubs);
+    batchSaveToFirestore('submissions', newSubs);
   };
 
   // Toggle Staff Verification (Admin Only)
@@ -416,7 +416,7 @@ ${sub.feedback || 'Pending educator grading and remarks.'}
     const t = teacherToDelete;
     const updated = teachers.filter(item => item.id !== t.id);
     saveTeachers(updated);
-    deleteFromSupabase('teachers', t.id);
+    deleteFromFirestore('teachers', t.id);
 
     recordDataEntry({
       type: 'Staff Record Deletion',
@@ -500,11 +500,11 @@ ${sub.feedback || 'Pending educator grading and remarks.'}
     const a = assignmentToDelete;
     const updated = assignments.filter(item => item.id !== a.id);
     saveAssignments(updated);
-    deleteFromSupabase('assignments', a.id);
+    deleteFromFirestore('assignments', a.id);
     
     // Also delete corresponding submissions
     const subsToDelete = submissions.filter(s => s.assignmentId === a.id);
-    subsToDelete.forEach(sub => deleteFromSupabase('submissions', sub.id));
+    subsToDelete.forEach(sub => deleteFromFirestore('submissions', sub.id));
     const updatedSubs = submissions.filter(s => s.assignmentId !== a.id);
     saveSubmissions(updatedSubs);
 

@@ -42,6 +42,7 @@ import {
   broadcastNoticeSMS, 
   BroadcastResult 
 } from '../utils/smsNoticeUtils';
+import { syncFirestoreCollection } from '../services/firebaseSync';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface NoticeManagementProps {
@@ -84,7 +85,7 @@ export default function NoticeManagement({ students }: NoticeManagementProps) {
   // Success Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Synchronize notices & logs across tabs and updates
+  // Synchronize notices & logs across tabs and Cloud Firestore
   useEffect(() => {
     const handleUpdate = () => {
       setNotices(getSavedClassNotices());
@@ -92,9 +93,17 @@ export default function NoticeManagement({ students }: NoticeManagementProps) {
     };
     window.addEventListener('sma_class_notice_dispatched', handleUpdate);
     window.addEventListener('storage', handleUpdate);
+
+    const unsubNotices = syncFirestoreCollection<ClassNotice>(
+      'class_notices',
+      'sma_class_notices',
+      setNotices
+    );
+
     return () => {
       window.removeEventListener('sma_class_notice_dispatched', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
+      unsubNotices();
     };
   }, []);
 

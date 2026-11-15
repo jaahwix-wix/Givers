@@ -37,13 +37,12 @@ import {
 import { wipeAllSystemData, loadSampleDemoData } from './utils/dataStore';
 import { recordDataEntry } from './utils/referenceLog';
 import { 
-  syncSupabaseCollection, 
-  saveToSupabase, 
-  deleteFromSupabase, 
-  batchSaveToSupabase, 
-  clearSupabaseCollection,
-  clearAllSupabaseSchoolData 
-} from './services/supabaseSync';
+  syncFirestoreCollection, 
+  saveToFirestore, 
+  deleteFromFirestore, 
+  batchSaveToFirestore, 
+  clearAllFirestoreSchoolData 
+} from './services/firebaseSync';
 
 // Component Imports
 import Dashboard from './components/Dashboard';
@@ -72,7 +71,7 @@ export { getPendingFeeStudents };
 export type { PendingFeeStudent };
 
 export default function App() {
-  const { user, role, privileges, can, isSupabaseOnline, setPortalActive, unlockSession } = useAuth();
+  const { user, role, privileges, can, isFirebaseOnline, setPortalActive, unlockSession } = useAuth();
   const [isPrivilegesModalOpen, setIsPrivilegesModalOpen] = useState(false);
 
   // Theme State
@@ -140,10 +139,10 @@ export default function App() {
     }
   }, [role]);
 
-  // 1. Real-time Supabase & LocalStorage Synchronization
+  // 1. Real-time Firebase Cloud Firestore & LocalStorage Synchronization
   useEffect(() => {
     // Realtime Sync for Students (Empty fallback for live production)
-    const unsubStudents = syncSupabaseCollection<Student>(
+    const unsubStudents = syncFirestoreCollection<Student>(
       'students',
       'sma_students',
       (items) => setStudents(items),
@@ -151,27 +150,30 @@ export default function App() {
     );
 
     // Realtime Sync for Academic Records
-    const unsubRecords = syncSupabaseCollection<StudentAcademicRecord>(
+    const unsubRecords = syncFirestoreCollection<StudentAcademicRecord>(
       'academic_records',
       'sma_academic_records',
       (items) => setRecords(items),
-      []
+      [],
+      'studentId'
     );
 
     // Realtime Sync for National Exam Preps
-    const unsubPreps = syncSupabaseCollection<NationalExamPrep>(
+    const unsubPreps = syncFirestoreCollection<NationalExamPrep>(
       'exam_preps',
       'sma_exam_preps',
       (items) => setExamPreps(items),
-      []
+      [],
+      'studentId'
     );
 
     // Realtime Sync for Fee Ledgers
-    const unsubFees = syncSupabaseCollection<StudentFeeLedger>(
+    const unsubFees = syncFirestoreCollection<StudentFeeLedger>(
       'fee_ledgers',
       'sma_fee_ledgers',
       (items) => setFees(items),
-      []
+      [],
+      'studentId'
     );
 
     const handleLocalWipe = () => {
@@ -183,22 +185,9 @@ export default function App() {
 
     window.addEventListener('sma_database_wiped', handleLocalWipe);
 
-    // Enforce Live Production Mode - delete all mock/sample data and stop auto generation
-    const liveProductionPurgeFlag = 'sma_live_production_clean_slate_active_v1';
-    if (typeof window !== 'undefined') {
+    // Mark live production mode active without wiping shared Firestore data on new browser loads
+    if (typeof window !== 'undefined' && localStorage.getItem('sma_live_production_active') === null) {
       localStorage.setItem('sma_live_production_active', 'true');
-      if (!localStorage.getItem(liveProductionPurgeFlag)) {
-        localStorage.setItem(liveProductionPurgeFlag, 'true');
-        wipeAllSystemData();
-        clearAllSupabaseSchoolData().catch(e => console.warn('Clean slate sync notice:', e));
-        recordDataEntry({
-          type: 'Database System Wipe',
-          category: 'System',
-          title: 'Live Production Clean Slate Activated',
-          summary: 'All mock and sample data have been wiped. System is in live production mode ready for real student admissions, grades, fees, and staff. Automatic mock data generation is completely disabled.',
-          status: 'Historical Reference'
-        });
-      }
     }
 
     return () => {
@@ -225,7 +214,7 @@ export default function App() {
     setStudents(updatedStuds);
     saveStateToStorage('sma_students', updatedStuds);
     // Persist to Cloud Firestore immediately
-    saveToSupabase('students', newStudent.id, newStudent);
+    saveToFirestore('students', newStudent.id, newStudent);
 
     // Permanent Data Entry Reference Tracking
     recordDataEntry({
@@ -251,7 +240,7 @@ export default function App() {
     const updatedRecs = [newRecord, ...records];
     setRecords(updatedRecs);
     saveStateToStorage('sma_academic_records', updatedRecs);
-    saveToSupabase('academic_records', newStudent.id, newRecord);
+    saveToFirestore('academic_records', newStudent.id, newRecord);
 
     // Initialize tuition fee ledger depending on class levels
     let termFee = 2500;
@@ -271,14 +260,14 @@ export default function App() {
     const updatedFees = [newLedger, ...fees];
     setFees(updatedFees);
     saveStateToStorage('sma_fee_ledgers', updatedFees);
-    saveToSupabase('fee_ledgers', newStudent.id, newLedger);
+    saveToFirestore('fee_ledgers', newStudent.id, newLedger);
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
     const updatedStuds = students.map(s => s.id === updatedStudent.id ? updatedStudent : s);
     setStudents(updatedStuds);
     saveStateToStorage('sma_students', updatedStuds);
-    saveToSupabase('students', updatedStudent.id, updatedStudent);
+    saveToFirestore('students', updatedStudent.id, updatedStudent);
 
     // Permanent Data Entry Reference Tracking
     recordDataEntry({
@@ -318,7 +307,7 @@ export default function App() {
       setFees(updatedFees);
       saveStateToStorage('sma_fee_ledgers', updatedFees);
       if (changedLedger) {
-        saveToSupabase('fee_ledgers', updatedStudent.id, changedLedger);
+        saveToFirestore('fee_ledgers', updatedStudent.id, changedLedger);
       }
     }
   };
@@ -331,23 +320,23 @@ export default function App() {
     const updatedStuds = students.filter(s => s.id !== id);
     setStudents(updatedStuds);
     saveStateToStorage('sma_students', updatedStuds);
-    deleteFromSupabase('students', id);
+    deleteFromFirestore('students', id);
 
     // Cascade deletion of secondary records
     const updatedRecs = records.filter(r => r.studentId !== id);
     setRecords(updatedRecs);
     saveStateToStorage('sma_academic_records', updatedRecs);
-    deleteFromSupabase('academic_records', id);
+    deleteFromFirestore('academic_records', id);
 
     const updatedPreps = examPreps.filter(ep => ep.studentId !== id);
     setExamPreps(updatedPreps);
     saveStateToStorage('sma_exam_preps', updatedPreps);
-    deleteFromSupabase('exam_preps', id);
+    deleteFromFirestore('exam_preps', id);
 
     const updatedFees = fees.filter(f => f.studentId !== id);
     setFees(updatedFees);
     saveStateToStorage('sma_fee_ledgers', updatedFees);
-    deleteFromSupabase('fee_ledgers', id);
+    deleteFromFirestore('fee_ledgers', id);
 
     // Permanent Data Entry Reference Tracking (Safely archives deleted record)
     recordDataEntry({
@@ -366,7 +355,7 @@ export default function App() {
     const updated = records.map(r => r.studentId === updatedRecord.studentId ? updatedRecord : r);
     setRecords(updated);
     saveStateToStorage('sma_academic_records', updated);
-    saveToSupabase('academic_records', updatedRecord.studentId, updatedRecord);
+    saveToFirestore('academic_records', updatedRecord.studentId, updatedRecord);
 
     const target = students.find(s => s.id === updatedRecord.studentId);
     recordDataEntry({
@@ -390,7 +379,7 @@ export default function App() {
     }
     setExamPreps(updated);
     saveStateToStorage('sma_exam_preps', updated);
-    saveToSupabase('exam_preps', updatedExamPrep.studentId, updatedExamPrep);
+    saveToFirestore('exam_preps', updatedExamPrep.studentId, updatedExamPrep);
 
     const target = students.find(s => s.id === updatedExamPrep.studentId);
     recordDataEntry({
@@ -441,7 +430,7 @@ export default function App() {
     setFees(updatedFees);
     saveStateToStorage('sma_fee_ledgers', updatedFees);
     if (updatedLedgerToSave) {
-      saveToSupabase('fee_ledgers', studentId, updatedLedgerToSave);
+      saveToFirestore('fee_ledgers', studentId, updatedLedgerToSave);
     }
 
     // Permanent Data Entry Reference Tracking
@@ -474,10 +463,10 @@ export default function App() {
     saveStateToStorage('sma_exam_preps', data.examPreps);
     saveStateToStorage('sma_fee_ledgers', data.fees);
 
-    batchSaveToSupabase('students', data.students);
-    batchSaveToSupabase('academic_records', data.records, 'studentId');
-    batchSaveToSupabase('exam_preps', data.examPreps, 'studentId');
-    batchSaveToSupabase('fee_ledgers', data.fees, 'studentId');
+    batchSaveToFirestore('students', data.students);
+    batchSaveToFirestore('academic_records', data.records, 'studentId');
+    batchSaveToFirestore('exam_preps', data.examPreps, 'studentId');
+    batchSaveToFirestore('fee_ledgers', data.fees, 'studentId');
   };
 
   const handleResetData = async () => {
@@ -494,7 +483,7 @@ export default function App() {
     setExamPreps([]);
     setFees([]);
 
-    await clearAllSupabaseSchoolData();
+    await clearAllFirestoreSchoolData();
   };
 
   const handleLoadDemoData = () => {
@@ -504,10 +493,10 @@ export default function App() {
     setExamPreps(DEMO_SAMPLE_NATIONAL_EXAMS);
     setFees(DEMO_SAMPLE_FEE_LEDGERS);
 
-    batchSaveToSupabase('students', DEMO_SAMPLE_STUDENTS);
-    batchSaveToSupabase('academic_records', DEMO_SAMPLE_ACADEMIC_RECORDS, 'studentId');
-    batchSaveToSupabase('exam_preps', DEMO_SAMPLE_NATIONAL_EXAMS, 'studentId');
-    batchSaveToSupabase('fee_ledgers', DEMO_SAMPLE_FEE_LEDGERS, 'studentId');
+    batchSaveToFirestore('students', DEMO_SAMPLE_STUDENTS);
+    batchSaveToFirestore('academic_records', DEMO_SAMPLE_ACADEMIC_RECORDS, 'studentId');
+    batchSaveToFirestore('exam_preps', DEMO_SAMPLE_NATIONAL_EXAMS, 'studentId');
+    batchSaveToFirestore('fee_ledgers', DEMO_SAMPLE_FEE_LEDGERS, 'studentId');
   };
 
   // Helper to deep route tabs and clear/set navigation params
@@ -675,8 +664,8 @@ export default function App() {
 
           <div className="flex items-center justify-between mt-2.5 px-1 text-[10px] text-slate-500 font-medium">
             <span className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-              <span>{isSupabaseOnline ? 'Supabase Cloud Active' : 'Local Mode'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${isFirebaseOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+              <span>{isFirebaseOnline ? 'Firebase Cloud Active' : 'Local Mode'}</span>
             </span>
             <span>v2.4 Pro</span>
           </div>

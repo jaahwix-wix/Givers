@@ -49,7 +49,7 @@ export default function WebsiteFooter({ onNavigate }: WebsiteFooterProps) {
     },
     {
       name: 'WhatsApp Direct',
-      url: 'https://wa.me/23276123456',
+      url: 'https://wa.me/23274155000',
       icon: MessageCircle,
       color: 'hover:bg-emerald-600 hover:text-white',
       ariaLabel: 'WhatsApp Student & Parent Enquiries'
@@ -253,6 +253,16 @@ export default function WebsiteFooter({ onNavigate }: WebsiteFooterProps) {
                 >
                   <ChevronRight className="w-3 h-3 text-emerald-500" />
                   Modern Computer Lab & Science Labs
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => handleLink('gallery')}
+                  className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-3 h-3 text-emerald-500" />
+                  Campus Photo Gallery & Events
                 </button>
               </li>
               <li>

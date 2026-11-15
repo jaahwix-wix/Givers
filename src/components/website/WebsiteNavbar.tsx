@@ -38,6 +38,7 @@ export default function WebsiteNavbar({ currentPage, onNavigate, onEnterMIS, not
     { id: 'academics', label: 'Academics & College' },
     { id: 'notices', label: 'Noticeboard & SMS', badge: noticeCount > 0 ? noticeCount : undefined },
     { id: 'facilities', label: 'Facilities' },
+    { id: 'gallery', label: 'Gallery' },
     { id: 'admissions', label: 'Admissions' },
     { id: 'contact', label: 'Contact & Map' },
   ];

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Student, Teacher } from '../types';
 import { SCHOOL_INFO } from '../initialData';
-import { syncSupabaseCollection, saveToSupabase, batchSaveToSupabase } from '../services/supabaseSync';
+import { syncFirestoreCollection, saveToFirestore, batchSaveToFirestore } from '../services/firebaseSync';
 
 interface VerificationQueueProps {
   students: Student[];
@@ -43,9 +43,9 @@ export default function VerificationQueue({ students, onUpdateStudent, onNavigat
   const [activeFilter, setActiveFilter] = useState<'all' | 'students' | 'staff'>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync teachers from Supabase & storage
+  // Sync teachers from Cloud Firestore & storage
   useEffect(() => {
-    const unsub = syncSupabaseCollection<Teacher>(
+    const unsub = syncFirestoreCollection<Teacher>(
       'teachers',
       'sma_teachers',
       (items) => setTeachers(items)
@@ -68,7 +68,7 @@ export default function VerificationQueue({ students, onUpdateStudent, onNavigat
     if (onUpdateStudent) {
       onUpdateStudent(updated);
     } else {
-      saveToSupabase('students', updated.id, updated);
+      saveToFirestore('students', updated.id, updated);
       const allStudentsCached = localStorage.getItem('sma_students');
       if (allStudentsCached) {
         try {
@@ -98,7 +98,7 @@ export default function VerificationQueue({ students, onUpdateStudent, onNavigat
     try {
       localStorage.setItem('sma_teachers', JSON.stringify(updated));
     } catch {}
-    saveToSupabase('teachers', teacher.id, {
+    saveToFirestore('teachers', teacher.id, {
       ...teacher,
       verified: true,
       verifiedBy: `${SCHOOL_INFO.principalName} (Admin)`,
@@ -129,7 +129,7 @@ export default function VerificationQueue({ students, onUpdateStudent, onNavigat
     try {
       localStorage.setItem('sma_teachers', JSON.stringify(updated));
     } catch {}
-    batchSaveToSupabase('teachers', updated);
+    batchSaveToFirestore('teachers', updated);
     window.dispatchEvent(new Event('storage'));
 
     setToastMessage(`All ${totalPending} pending accounts verified by ${SCHOOL_INFO.principalName}.`);

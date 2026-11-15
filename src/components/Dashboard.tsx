@@ -674,11 +674,9 @@ CEO/Principal, Givers World Mission`;
             </div>
 
             <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 font-medium">Online Web Registry:</span>
+              <span className="text-[10px] text-slate-400 font-medium">Public Web Portal:</span>
               <a
                 href={SCHOOL_INFO.website}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
               >
                 <span>Visit Portal</span>
@@ -1414,7 +1412,7 @@ CEO/Principal, Givers World Mission`;
               <div className="flex items-center gap-2">
                 {noticeModal.student && noticeChannel === 'sms' && (
                   <a
-                    href={`sms:${noticeModal.student.parentPhone}?body=${encodeURIComponent(noticeMessageText)}`}
+                    href={`sms:${noticeModal.student.parentPhone.replace(/\s+/g, '')}?body=${encodeURIComponent(noticeMessageText)}`}
                     className="py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
                   >
                     <Phone className="w-3.5 h-3.5 text-emerald-600" />
@@ -1424,7 +1422,7 @@ CEO/Principal, Givers World Mission`;
 
                 {noticeModal.student && noticeChannel === 'email' && (
                   <a
-                    href={`mailto:guardian@giversworldmission.edu.sl?subject=${encodeURIComponent(`Tuition Fee Notice - ${noticeModal.student.name}`)}&body=${encodeURIComponent(noticeMessageText)}`}
+                    href={`mailto:${SCHOOL_INFO.email}?subject=${encodeURIComponent(`Tuition Fee Notice - ${noticeModal.student.name}`)}&body=${encodeURIComponent(noticeMessageText)}`}
                     className="py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
                   >
                     <Mail className="w-3.5 h-3.5 text-indigo-600" />

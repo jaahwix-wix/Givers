@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Student, StudentClass } from '../types';
 import { CLASSES_LIST } from '../constants';
-import { syncSupabaseCollection, batchSaveToSupabase } from '../services/supabaseSync';
+import { syncFirestoreCollection, batchSaveToFirestore } from '../services/firebaseSync';
 
 interface StudentAttendancePanelProps {
   students: Student[];
@@ -50,9 +50,9 @@ export default function StudentAttendancePanel({ students }: StudentAttendancePa
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isSavedMessage, setIsSavedMessage] = useState(false);
 
-  // Load attendance logs with Supabase & local cache
+  // Load attendance logs with Cloud Firestore & local cache
   useEffect(() => {
-    const unsub = syncSupabaseCollection<AttendanceRecord>(
+    const unsub = syncFirestoreCollection<AttendanceRecord>(
       'daily_attendance',
       'sma_daily_attendance',
       (records) => setAttendanceRecords(records),
@@ -133,7 +133,7 @@ export default function StudentAttendancePanel({ students }: StudentAttendancePa
     try {
       localStorage.setItem('sma_daily_attendance', JSON.stringify(updatedRecords));
     } catch {}
-    batchSaveToSupabase('daily_attendance', updatedRecords);
+    batchSaveToFirestore('daily_attendance', updatedRecords);
     
     setIsSavedMessage(true);
     setTimeout(() => setIsSavedMessage(false), 3000);

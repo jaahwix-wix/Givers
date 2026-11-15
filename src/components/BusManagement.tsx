@@ -25,11 +25,12 @@ import {
 import { Student, StudentClass } from '../types';
 import { CLASSES_LIST } from '../constants';
 import { 
-  syncSupabaseCollection, 
-  batchSaveToSupabase, 
-  saveToSupabase, 
-  deleteFromSupabase 
-} from '../services/supabaseSync';
+  syncFirestoreCollection, 
+  syncFirestoreDoc,
+  batchSaveToFirestore, 
+  saveToFirestore, 
+  deleteFromFirestore 
+} from '../services/firebaseSync';
 
 interface BusManagementProps {
   students: Student[];
@@ -74,25 +75,35 @@ export default function BusManagement({ students }: BusManagementProps) {
   const [formCapacity, setFormCapacity] = useState(30);
   const [formStatus, setFormStatus] = useState<SchoolBus['status']>('Idle');
 
-  // Load state from Supabase or local storage
+  // Load state from Cloud Firestore or local storage
   useEffect(() => {
-    const unsubBuses = syncSupabaseCollection<SchoolBus>(
+    const unsubBuses = syncFirestoreCollection<SchoolBus>(
       'buses',
       'sma_buses',
       (items) => setBuses(items),
       DEFAULT_BUSES
     );
 
-    // Load bus assignments
-    const loadAssignments = () => {
-      try {
-        const cached = localStorage.getItem('sma_bus_assignments');
-        if (cached) {
-          setAssignments(JSON.parse(cached));
+    // Load cached bus assignments and subscribe to Cloud Firestore active_allocations doc
+    try {
+      const cached = localStorage.getItem('sma_bus_assignments');
+      if (cached) {
+        setAssignments(JSON.parse(cached));
+      }
+    } catch {}
+
+    const unsubAssignments = syncFirestoreDoc<{ id: string; assignments?: Record<string, string> }>(
+      'bus_assignments',
+      'active_allocations',
+      (docData) => {
+        if (docData?.assignments && typeof docData.assignments === 'object') {
+          setAssignments(docData.assignments);
+          try {
+            localStorage.setItem('sma_bus_assignments', JSON.stringify(docData.assignments));
+          } catch {}
         }
-      } catch {}
-    };
-    loadAssignments();
+      }
+    );
 
     const handleWiped = () => {
       setBuses([]);
@@ -103,6 +114,7 @@ export default function BusManagement({ students }: BusManagementProps) {
 
     return () => {
       unsubBuses();
+      unsubAssignments();
       window.removeEventListener('sma_database_wiped', handleWiped);
     };
   }, []);
@@ -113,7 +125,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     try {
       localStorage.setItem('sma_buses', JSON.stringify(updatedBuses));
     } catch {}
-    batchSaveToSupabase('buses', updatedBuses);
+    batchSaveToFirestore('buses', updatedBuses);
   };
 
   const saveAssignments = (updatedAssignments: Record<string, string>) => {
@@ -121,7 +133,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     try {
       localStorage.setItem('sma_bus_assignments', JSON.stringify(updatedAssignments));
     } catch {}
-    saveToSupabase('bus_assignments', 'active_allocations', {
+    saveToFirestore('bus_assignments', 'active_allocations', {
       id: 'active_allocations',
       assignments: updatedAssignments,
       updatedAt: new Date().toISOString()
@@ -197,7 +209,7 @@ export default function BusManagement({ students }: BusManagementProps) {
     const b = busToDelete;
     const updatedBuses = buses.filter(item => item.id !== b.id);
     saveBuses(updatedBuses);
-    deleteFromSupabase('buses', b.id);
+    deleteFromFirestore('buses', b.id);
     
     // Remove assignments
     const updatedAssignments = { ...assignments };

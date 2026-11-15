@@ -25,7 +25,7 @@ export const SCHOOL_INFO = {
   address: 'Givers World Mission Compound Kambia Town Sierra Leone.',
   phone: '+232 74155000',
   email: 'info@giversworldmission.edu.sl',
-  website: 'https://givers-world-mission-high-school.vercel.app/',
+  website: typeof window !== 'undefined' ? window.location.origin : '/',
   logo: schoolLogo,
   founded: 2000,
   principalName: 'Evangelist Saint Turay',

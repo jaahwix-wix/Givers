@@ -42,7 +42,7 @@ interface GlobalHeaderProps {
 }
 
 export default function GlobalHeader({ students, fees, activeTab, onNavigate, onOpenPrivileges, onNavigateToWebsite }: GlobalHeaderProps) {
-  const { user, role, privileges, isSupabaseOnline, lockSession, secondsRemaining, resetInactivityTimer } = useAuth();
+  const { user, role, privileges, isFirebaseOnline, lockSession, secondsRemaining, resetInactivityTimer } = useAuth();
   const { alerts, unreadCount, markAsRead, markAllAsRead, addAnnouncement } = useNotifications({ students, fees });
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -314,11 +314,11 @@ export default function GlobalHeader({ students, fees, activeTab, onNavigate, on
           type="button"
           onClick={() => setIsSupabaseModalOpen(true)}
           className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
-          title="Click to view Supabase database connection, credentials, and SQL schema setup"
+          title="Click to inspect the Firebase Cloud Firestore hosting database & run a live sync check"
         >
           <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Supabase Synced</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isFirebaseOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+          <span>{isFirebaseOnline ? 'Firebase Synced' : 'Local Cache'}</span>
         </button>
 
         <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">

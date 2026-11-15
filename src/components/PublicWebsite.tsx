@@ -8,6 +8,7 @@ import { AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { ClassNotice, Student, UserRole } from '../types';
 import { getSavedClassNotices } from '../utils/smsNoticeUtils';
+import { syncFirestoreCollection } from '../services/firebaseSync';
 
 import WebsiteNavbar from './website/WebsiteNavbar';
 import WebsiteFooter from './website/WebsiteFooter';
@@ -34,16 +35,24 @@ export default function PublicWebsite({ onEnterPortal, students = [] }: PublicWe
   const [currentPage, setCurrentPage] = useState<string>('home');
   const [notices, setNotices] = useState<ClassNotice[]>(() => getSavedClassNotices());
 
-  // Listen for real-time notice dispatches
+  // Listen for real-time notice dispatches & Firestore sync
   useEffect(() => {
     const handleNoticesUpdate = () => {
       setNotices(getSavedClassNotices());
     };
     window.addEventListener('sma_class_notice_dispatched', handleNoticesUpdate);
     window.addEventListener('storage', handleNoticesUpdate);
+
+    const unsubNotices = syncFirestoreCollection<ClassNotice>(
+      'class_notices',
+      'sma_class_notices',
+      setNotices
+    );
+
     return () => {
       window.removeEventListener('sma_class_notice_dispatched', handleNoticesUpdate);
       window.removeEventListener('storage', handleNoticesUpdate);
+      unsubNotices();
     };
   }, []);
 

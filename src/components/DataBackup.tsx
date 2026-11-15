@@ -39,7 +39,7 @@ import {
   ReferenceCategory,
   recordDataEntry
 } from '../utils/referenceLog';
-import { getSupabaseUrl } from '../supabase';
+import firebaseConfig from '../../firebase-applet-config.json';
 import SupabaseConfigModal from './SupabaseConfigModal';
 
 interface DataBackupProps {
@@ -861,7 +861,7 @@ export default function DataBackup({ students, records, examPreps, fees, onResto
         </div>
       )}
 
-      {/* Supabase Cloud Database Management Card */}
+      {/* Firebase Hosting Database (Cloud Firestore) Card */}
       <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 text-white p-6 rounded-3xl border border-emerald-900/60 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-900/40 pb-4">
           <div className="flex items-center gap-3">
@@ -870,13 +870,13 @@ export default function DataBackup({ students, records, examPreps, fees, onResto
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-white text-base">Supabase Cloud Database</h3>
+                <h3 className="font-extrabold text-white text-base">Firebase Hosting Database (Cloud Firestore)</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                   Primary Database
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Active PostgreSQL backend: <code className="font-mono text-emerald-400">{getSupabaseUrl().replace('https://', '')}</code>
+                Active Firestore Project: <code className="font-mono text-emerald-400">{firebaseConfig.projectId}</code> ({firebaseConfig.firestoreDatabaseId})
               </p>
             </div>
           </div>
@@ -887,7 +887,7 @@ export default function DataBackup({ students, records, examPreps, fees, onResto
             className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm shrink-0"
           >
             <Database className="w-4 h-4" />
-            <span>Configure Supabase &amp; SQL Schema</span>
+            <span>Inspect Firestore &amp; Cloud Sync</span>
           </button>
         </div>
 
@@ -896,9 +896,9 @@ export default function DataBackup({ students, records, examPreps, fees, onResto
             <span className="text-[10px] font-bold text-slate-400 uppercase">Engine Status</span>
             <p className="font-bold text-emerald-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              PostgreSQL Document Store
+              Cloud Firestore Document Store
             </p>
-            <span className="text-[11px] text-slate-400">Live Realtime pubsub active</span>
+            <span className="text-[11px] text-slate-400">Live Realtime onSnapshot sync active</span>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
@@ -911,15 +911,15 @@ export default function DataBackup({ students, records, examPreps, fees, onResto
           </div>
 
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">SQL Initialization</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Cloud Collections</span>
             <button
               type="button"
               onClick={() => setIsSupabaseModalOpen(true)}
               className="text-left font-bold text-emerald-300 hover:text-emerald-200 underline cursor-pointer"
             >
-              Copy 1-Click SQL Script &rarr;
+              Inspect &amp; Push Records &rarr;
             </button>
-            <span className="text-[11px] text-slate-400 block">Sets up tables in 5 seconds</span>
+            <span className="text-[11px] text-slate-400 block">Verifies live Firestore sync</span>
           </div>
         </div>
       </div>

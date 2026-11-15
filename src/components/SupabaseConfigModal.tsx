@@ -4,40 +4,27 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Database, 
-  CheckCircle2, 
-  AlertCircle, 
-  Copy, 
-  Check, 
-  RefreshCw, 
-  ExternalLink, 
-  Key, 
-  Globe, 
-  X, 
-  ShieldCheck, 
-  Code, 
-  Layers, 
-  Save, 
-  RotateCcw,
-  Eye,
-  EyeOff,
-  CloudUpload
+import {
+  Database,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
+  Check,
+  RefreshCw,
+  ExternalLink,
+  X,
+  ShieldCheck,
+  Layers,
+  CloudUpload,
+  Flame,
+  Server,
 } from 'lucide-react';
-import { 
-  getSupabaseUrl, 
-  getSupabaseAnonKey, 
-  saveSupabaseCredentials, 
-  resetSupabaseCredentials, 
-  testSupabaseConnection, 
-  SUPABASE_SQL_SETUP_SCRIPT,
-  DEFAULT_SUPABASE_URL,
-  DEFAULT_SUPABASE_ANON_KEY
-} from '../supabase';
-import { saveAllSchoolRecordsToSupabase } from '../services/supabaseSync';
+import firebaseConfig from '../../firebase-applet-config.json';
+import { testFirestoreConnection } from '../firebase';
+import { saveAllSchoolRecordsToFirestore } from '../services/firebaseSync';
 import { Student, StudentAcademicRecord, NationalExamPrep, StudentFeeLedger } from '../types';
 
-interface SupabaseConfigModalProps {
+interface FirebaseConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   students?: Student[];
@@ -46,93 +33,82 @@ interface SupabaseConfigModalProps {
   fees?: StudentFeeLedger[];
 }
 
+const COLLECTIONS_LIST = [
+  { name: 'students', desc: 'Student admission files, guardian contacts & verification status' },
+  { name: 'academic_records', desc: 'Terminal continuous assessments, exam grades & conduct' },
+  { name: 'fee_ledgers', desc: 'Term 1–3 tuition billing, SLE receipts & payment ledgers' },
+  { name: 'exam_preps', desc: 'NPSE, BECE, WASSCE & tertiary exam readiness tracking' },
+  { name: 'teachers', desc: 'Faculty directory, access codes & salary allocations' },
+  { name: 'assignments / submissions', desc: 'Coursework assignments & student answer submissions' },
+  { name: 'class_notices / announcements', desc: 'Official bulletins & GSM SMS broadcast alerts' },
+  { name: 'buses / bus_assignments', desc: 'Fleet manifest, routes, drivers & commuter allocations' },
+  { name: 'daily_attendance / incidents', desc: 'Daily roll calls & student disciplinary incident logs' },
+  { name: 'library_books / library_checkouts', desc: 'Library catalog & active book loan records' },
+  { name: 'reference_snapshots / reference_audit_logs', desc: 'Permanent audit trail & labeled archive checkpoints' },
+];
+
 export default function SupabaseConfigModal({
   isOpen,
   onClose,
   students = [],
   records = [],
   examPreps = [],
-  fees = []
-}: SupabaseConfigModalProps) {
-  const [activeTab, setActiveTab] = useState<'status' | 'sql' | 'credentials'>('status');
-
-  // Supabase Settings form
-  const [urlInput, setUrlInput] = useState(getSupabaseUrl());
-  const [keyInput, setKeyInput] = useState(getSupabaseAnonKey());
-  const [showKey, setShowKey] = useState(false);
-
-  // Connection testing state
+  fees = [],
+}: FirebaseConfigModalProps) {
+  const [activeTab, setActiveTab] = useState<'status' | 'collections'>('status');
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     tested: boolean;
-    success: boolean;
     connected: boolean;
-    tableExists: boolean;
     message: string;
     latencyMs?: number;
   }>({
     tested: false,
-    success: false,
     connected: false,
-    tableExists: false,
-    message: ''
+    message: '',
   });
-
-  // Copy feedback states
-  const [copiedSql, setCopiedSql] = useState(false);
-  const [copiedUrl, setCopiedUrl] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
-
-  // Push data state
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isPushing, setIsPushing] = useState(false);
   const [pushMessage, setPushMessage] = useState('');
 
+  const firestoreConsoleUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/databases/${firebaseConfig.firestoreDatabaseId}/data`;
+
   useEffect(() => {
     if (isOpen) {
-      setUrlInput(getSupabaseUrl());
-      setKeyInput(getSupabaseAnonKey());
       runTest();
     }
   }, [isOpen]);
 
   const runTest = async () => {
     setIsTesting(true);
+    const start = performance.now();
     try {
-      const res = await testSupabaseConnection();
+      const ok = await testFirestoreConnection();
+      const latencyMs = Math.round(performance.now() - start);
+      window.dispatchEvent(new Event('sma_firebase_config_changed'));
       setTestResult({
         tested: true,
-        ...res
+        connected: ok,
+        latencyMs,
+        message: ok
+          ? `Connected cleanly to Cloud Firestore database "${firebaseConfig.firestoreDatabaseId}" in project "${firebaseConfig.projectId}".`
+          : 'Cloud Firestore is currently unreachable or offline. Changes remain queued in local browser cache and will auto-sync on reconnect.',
       });
     } catch (err: any) {
       setTestResult({
         tested: true,
-        success: false,
         connected: false,
-        tableExists: false,
-        message: err?.message || 'Connection failed'
+        message: err?.message || 'Unable to verify Firestore connection',
       });
     } finally {
       setIsTesting(false);
     }
   };
 
-  const handleSaveCredentials = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveSupabaseCredentials(urlInput, keyInput);
-    runTest();
-  };
-
-  const handleResetDefaults = () => {
-    resetSupabaseCredentials();
-    setUrlInput(DEFAULT_SUPABASE_URL);
-    setKeyInput(DEFAULT_SUPABASE_ANON_KEY);
-    runTest();
-  };
-
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(SUPABASE_SQL_SETUP_SCRIPT);
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 2500);
+  const handleCopy = (label: string, val: string) => {
+    navigator.clipboard.writeText(val);
+    setCopiedId(label);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handlePushData = async () => {
@@ -144,7 +120,7 @@ export default function SupabaseConfigModal({
       const buses = JSON.parse(localStorage.getItem('sma_buses') || '[]');
       const notices = JSON.parse(localStorage.getItem('sma_class_notices') || '[]');
 
-      const res = await saveAllSchoolRecordsToSupabase({
+      const res = await saveAllSchoolRecordsToFirestore({
         students,
         records,
         examPreps,
@@ -152,13 +128,15 @@ export default function SupabaseConfigModal({
         teachers,
         books,
         buses,
-        notices
+        notices,
       });
 
       if (res.success) {
-        setPushMessage(`Successfully synchronized ${res.counts.students} students, ${res.counts.records} grade sheets, and all school data to Supabase!`);
+        setPushMessage(
+          `Successfully synchronized ${res.counts.students} students, ${res.counts.records} grade sheets, ${res.counts.fees} fee ledgers, and all school records to Cloud Firestore!`
+        );
       } else {
-        setPushMessage('Data push completed with some local notes. Ensure the school_documents table is created in Supabase.');
+        setPushMessage('Some collections could not be pushed cleanly. Verify Firestore rules and network connection.');
       }
     } catch (err: any) {
       setPushMessage(`Sync warning: ${err?.message || 'Check connection'}`);
@@ -175,20 +153,20 @@ export default function SupabaseConfigModal({
         {/* Modal Header */}
         <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-              <Database className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+              <Flame className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                  Supabase Cloud Database
+                  Firebase Hosting Database (Cloud Firestore)
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  Postgres Engine
+                  Live Hosted DB
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Primary persistent database engine for Givers World Mission Diplomats Academy & College
+                Primary real-time database engine for Givers World Mission Diplomats Academy & College
               </p>
             </div>
           </div>
@@ -214,51 +192,36 @@ export default function SupabaseConfigModal({
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>Connection & Health</span>
+            <span>Connection & Sync</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTab('sql')}
+            onClick={() => setActiveTab('collections')}
             className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'sql'
+              activeTab === 'collections'
                 ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            <Code className="w-4 h-4" />
-            <span>SQL Schema Setup</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('credentials')}
-            className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'credentials'
-                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-          >
-            <Key className="w-4 h-4" />
-            <span>API Credentials</span>
+            <Layers className="w-4 h-4" />
+            <span>Firestore Collections</span>
           </button>
         </div>
 
         {/* Tab Contents */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {/* TAB 1: Status */}
           {activeTab === 'status' && (
             <div className="space-y-6">
               {/* Status Banner */}
-              <div className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
-                testResult.connected && testResult.tableExists
-                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200'
-                  : testResult.connected
-                  ? 'bg-amber-50/70 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200'
-                  : 'bg-rose-50/70 border-rose-200 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-200'
-              }`}>
-                {testResult.connected && testResult.tableExists ? (
+              <div
+                className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
+                  testResult.connected
+                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200'
+                    : 'bg-amber-50/70 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200'
+                }`}
+              >
+                {testResult.connected ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 ) : (
                   <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -267,11 +230,9 @@ export default function SupabaseConfigModal({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h4 className="font-bold text-sm">
-                      {testResult.connected && testResult.tableExists
-                        ? 'Supabase Cloud Database: Active & Ready'
-                        : testResult.connected
-                        ? 'Connected to Supabase (SQL Setup Required)'
-                        : 'Checking Supabase Connection...'}
+                      {testResult.connected
+                        ? 'Cloud Firestore Hosting Database: Active & Ready'
+                        : 'Checking Cloud Firestore Connection...'}
                     </h4>
                     {testResult.latencyMs !== undefined && (
                       <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/80 font-bold">
@@ -280,7 +241,7 @@ export default function SupabaseConfigModal({
                     )}
                   </div>
                   <p className="text-xs mt-1 leading-relaxed opacity-90">
-                    {testResult.message || 'Connecting to endpoint...'}
+                    {testResult.message || 'Connecting to Firebase project...'}
                   </p>
                 </div>
 
@@ -295,44 +256,54 @@ export default function SupabaseConfigModal({
                 </button>
               </div>
 
-              {/* Quick Metrics Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400">Database Engine</span>
-                  <p className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
-                    <Database className="w-4 h-4 text-emerald-500" /> PostgreSQL
+              {/* Project Metadata Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Firebase Project ID</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('projectId', firebaseConfig.projectId)}
+                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedId === 'projectId' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedId === 'projectId' ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                  <p className="font-mono font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                    <Server className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span className="truncate">{firebaseConfig.projectId}</span>
                   </p>
-                  <span className="text-[11px] text-slate-500">Realtime enabled</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400">Target Schema</span>
-                  <p className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-indigo-500" /> school_documents
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Firestore Database ID</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('dbId', firebaseConfig.firestoreDatabaseId)}
+                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedId === 'dbId' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedId === 'dbId' ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                  <p className="font-mono font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                    <Database className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="truncate">{firebaseConfig.firestoreDatabaseId}</span>
                   </p>
-                  <span className="text-[11px] text-slate-500">
-                    {testResult.tableExists ? 'Table verified' : 'Ready to create'}
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400">Offline Resilience</span>
-                  <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Active Local Cache
-                  </p>
-                  <span className="text-[11px] text-slate-500">Zero data loss on offline</span>
                 </div>
               </div>
 
               {/* Sync Actions */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h5 className="font-bold text-slate-900 dark:text-white text-xs">
-                      Push All Local School Records to Supabase
+                      Push All Local School Records to Cloud Firestore
                     </h5>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Batch uploads all current students, academic continuous assessments, and fee receipts to your Supabase project.
+                      Batch-saves all current students, continuous assessments, tuition ledgers, staff, library, and notices directly to the hosted Firestore database.
                     </p>
                   </div>
 
@@ -343,7 +314,7 @@ export default function SupabaseConfigModal({
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   >
                     <CloudUpload className={`w-3.5 h-3.5 ${isPushing ? 'animate-bounce' : ''}`} />
-                    <span>{isPushing ? 'Pushing Data...' : 'Sync to Supabase'}</span>
+                    <span>{isPushing ? 'Syncing Data...' : 'Sync All to Firestore'}</span>
                   </button>
                 </div>
 
@@ -356,169 +327,48 @@ export default function SupabaseConfigModal({
             </div>
           )}
 
-          {/* TAB 2: SQL Setup */}
-          {activeTab === 'sql' && (
+          {activeTab === 'collections' && (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                    Supabase SQL Initialization Script
+                    Active Cloud Firestore Collections
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    Execute this script once in your Supabase SQL Editor. It creates the <code className="font-mono text-emerald-600">school_documents</code>, <code className="font-mono text-emerald-600">reference_snapshots</code>, and <code className="font-mono text-emerald-600">reference_audit_logs</code> tables with Row Level Security (RLS) and Realtime streaming.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Real-time <code className="font-mono text-emerald-600">onSnapshot</code> listeners synchronize these collections across all staff browsers automatically.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href="https://supabase.com/dashboard"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors inline-flex items-center gap-1"
-                  >
-                    <span>Supabase Dashboard</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={handleCopySql}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    {copiedSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedSql ? 'Copied to Clipboard!' : 'Copy SQL Script'}</span>
-                  </button>
-                </div>
+                <a
+                  href={firestoreConsoleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors inline-flex items-center gap-1 shrink-0"
+                >
+                  <span>Firebase Console</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
 
-              {/* Instructions steps */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-800">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Step 1:</span> Copy this SQL script using the button above.
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-800">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Step 2:</span> Go to your Supabase project & click <strong>SQL Editor</strong>.
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-800">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Step 3:</span> Paste the script and click <strong>Run</strong> (Ctrl+Enter).
-                </div>
-              </div>
-
-              {/* Code Viewer */}
-              <div className="relative rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-[11px] text-slate-200 overflow-x-auto max-h-72 leading-relaxed">
-                <pre>{SUPABASE_SQL_SETUP_SCRIPT}</pre>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                {COLLECTIONS_LIST.map((col) => (
+                  <div
+                    key={col.name}
+                    className="p-3.5 bg-white dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                  >
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{col.name}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[11px]">{col.desc}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-
-          {/* TAB 3: Credentials */}
-          {activeTab === 'credentials' && (
-            <form onSubmit={handleSaveCredentials} className="space-y-4">
-              <div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  Supabase Project Credentials
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Found in your Supabase project under <strong>Settings &gt; API</strong>.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Project URL (VITE_SUPABASE_URL)
-                  </label>
-                  <div className="relative">
-                    <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder="https://your-project-ref.supabase.co"
-                      required
-                      className="w-full pl-9 pr-24 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(urlInput);
-                        setCopiedUrl(true);
-                        setTimeout(() => setCopiedUrl(false), 2000);
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"
-                    >
-                      {copiedUrl ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedUrl ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Anon / Public Key (VITE_SUPABASE_ANON_KEY)
-                  </label>
-                  <div className="relative">
-                    <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type={showKey ? 'text' : 'password'}
-                      value={keyInput}
-                      onChange={(e) => setKeyInput(e.target.value)}
-                      placeholder="eyJhbGciOiJIUzI1NiIsIn..."
-                      required
-                      className="w-full pl-9 pr-28 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
-                    />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowKey(!showKey)}
-                        className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600"
-                        title={showKey ? 'Hide key' : 'Show key'}
-                      >
-                        {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(keyInput);
-                          setCopiedKey(true);
-                          setTimeout(() => setCopiedKey(false), 2000);
-                        }}
-                        className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"
-                      >
-                        {copiedKey ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        <span>{copiedKey ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleResetDefaults}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset to App Defaults</span>
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save & Test Reconnect</span>
-                </button>
-              </div>
-            </form>
           )}
         </div>
 
         {/* Modal Footer */}
         <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between">
           <span className="text-[11px] text-slate-400">
-            Current Endpoint: <strong className="font-mono text-slate-600 dark:text-slate-300">{getSupabaseUrl().replace('https://', '')}</strong>
+            Hosted Project: <strong className="font-mono text-slate-600 dark:text-slate-300">{firebaseConfig.projectId}</strong>
           </span>
 
           <button

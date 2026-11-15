@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { saveToSupabase } from '../services/supabaseSync';
+import { saveToFirestore } from '../services/firebaseSync';
 
 export type ReferenceEntryType =
   | 'Student Registration'
@@ -63,7 +63,7 @@ export function getAllReferenceEntries(): DataEntryReference[] {
 }
 
 /**
- * Saves a single reference entry into persistent storage (Supabase & LocalStorage)
+ * Saves a single reference entry into persistent storage (Firestore & LocalStorage)
  */
 export function recordDataEntry(params: {
   type: ReferenceEntryType;
@@ -111,8 +111,8 @@ export function recordDataEntry(params: {
     const bounded = updated.slice(0, 2000);
     localStorage.setItem(REFERENCE_STORAGE_KEY, JSON.stringify(bounded));
 
-    // Persist to Supabase reference collection
-    saveToSupabase('reference_audit_logs', id, entry);
+    // Persist to Firebase Firestore reference collection
+    saveToFirestore('reference_audit_logs', id, entry);
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sma_reference_logged', { detail: entry }));
